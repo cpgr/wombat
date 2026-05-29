@@ -93,7 +93,7 @@
     variable = gamma_ve
     k_v = 1.0e-12
     delta_rho = 300.0
-    gravity = 9.81
+    gravity = '0 0 -9.81'
     mu_n = 1.0e-3
     Q = 1.0e-3
     L = 1000.0
@@ -164,7 +164,8 @@
   []
   [permeability]
     type = VEPermeability
-    K_up = 1.0e-12
+    K_up_xx = 1.0e-12
+    K_up_yy = 1.0e-12
   []
   [fluid_props]
     type = VEFluidPropertiesConst

@@ -21,7 +21,9 @@ VEGravityNumberAux::validParams()
       "reference flow scale; typically the total well rate for the domain.");
   params.addRequiredParam<Real>("L",
                                 "Characteristic horizontal length of the domain [m].");
-  params.addParam<Real>("gravity", 9.81, "Gravitational acceleration [m/s^2].");
+  RealVectorValue g_default(0.0, 0.0, -9.81);
+  params.addParam<RealVectorValue>(
+      "gravity", g_default, "Gravity vector [m/s^2]. Defaults to (0, 0, -9.81).");
 
   params.set<bool>("use_displaced_mesh") = false;
   params.suppressParameter<bool>("use_displaced_mesh");
@@ -38,7 +40,7 @@ VEGravityNumberAux::VEGravityNumberAux(const InputParameters & parameters)
     _mu_n(getParam<Real>("mu_n")),
     _Q(getParam<Real>("Q")),
     _L(getParam<Real>("L")),
-    _gravity(getParam<Real>("gravity"))
+    _gravity_magnitude(getParam<RealVectorValue>("gravity").norm())
 {
   if (_k_v <= 0.0)
     paramError("k_v", "Vertical permeability must be positive.");
@@ -56,5 +58,5 @@ Real
 VEGravityNumberAux::computeValue()
 {
   const Real denom = _mu_n * _phi_bar[_qp] * _Q * _L;
-  return _k_v * _delta_rho * _gravity * _H[_qp] * _H[_qp] / denom;
+  return _k_v * _delta_rho * _gravity_magnitude * _H[_qp] * _H[_qp] / denom;
 }

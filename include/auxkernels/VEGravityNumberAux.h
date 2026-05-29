@@ -52,5 +52,5 @@ protected:
   const Real _mu_n;
   const Real _Q;
   const Real _L;
-  const Real _gravity;
+  const Real _gravity_magnitude;
 };

@@ -175,7 +175,8 @@
   # Upscaled horizontal permeability (isotropic 2x2, no H factor here)
   [permeability]
     type = VEPermeability
-    K_up = 1.0e-10
+    K_up_xx = 1.0e-10
+    K_up_yy = 1.0e-10
   []
 
   # Constant fluid properties -- equal for both phases so M = 1

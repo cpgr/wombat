@@ -10,10 +10,10 @@ VEFluidPropertiesConst::validParams()
       "Constant fluid properties for VE verification cases. Provides ve_density and "
       "ve_viscosity with user-supplied scalar values for CO2 and brine.");
 
-  params.addParam<Real>("rho_co2",   700.0,   "CO2 density [kg/m3].");
-  params.addParam<Real>("rho_brine", 1020.0,  "Brine density [kg/m3].");
-  params.addParam<Real>("mu_co2",    5.0e-5,  "CO2 dynamic viscosity [Pa*s].");
-  params.addParam<Real>("mu_brine",  8.0e-4,  "Brine dynamic viscosity [Pa*s].");
+  params.addRequiredParam<Real>("rho_co2",   "CO2 density [kg/m3].");
+  params.addRequiredParam<Real>("rho_brine", "Brine density [kg/m3].");
+  params.addRequiredParam<Real>("mu_co2",    "CO2 dynamic viscosity [Pa*s].");
+  params.addRequiredParam<Real>("mu_brine",  "Brine dynamic viscosity [Pa*s].");
 
   params.set<bool>("use_displaced_mesh") = false;
   params.suppressParameter<bool>("use_displaced_mesh");

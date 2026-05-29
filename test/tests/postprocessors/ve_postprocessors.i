@@ -135,7 +135,8 @@
   []
   [permeability]
     type = VEPermeability
-    K_up = 1.0e-12
+    K_up_xx = 1.0e-12
+    K_up_yy = 1.0e-12
   []
   [fluid_props]
     type = VEFluidPropertiesConst

@@ -223,7 +223,8 @@
   []
   [permeability]
     type = VEPermeability
-    K_up = 1.0e-12
+    K_up_xx = 1.0e-12
+    K_up_yy = 1.0e-12
   []
   # Distinct densities: rho_w > rho_n drives updip CO2 migration.
   [fluid_props]
