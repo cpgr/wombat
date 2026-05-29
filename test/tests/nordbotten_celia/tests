@@ -1,0 +1,17 @@
+[Tests]
+  design = 'VEAdvectiveFluxS.md VEAdvectiveFluxP.md'
+  issues = '#2'
+
+  [nc_sloped]
+    type = CSVDiff
+    input = 'nc_sloped.i'
+    csvdiff = 'nc_sloped_csv.csv'
+    cli_args = 'Executioner/end_time=5e4'
+    rel_err = 1.0e-4
+    abs_zero = 1.0e-6
+    requirement = 'The VE kernels shall produce updip CO2 migration in a sloped '
+                  'aquifer driven by the rho_c * |g| * grad(z_T) buoyancy term. '
+                  'Mass conservation (co2_integral vs analytical_mass) shall hold '
+                  'to within rel_err = 1e-4 at every reported timestep.'
+  []
+[]
