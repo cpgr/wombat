@@ -221,7 +221,7 @@
   []
 
   [max_pp]
-    type = NodalMaxValue
+    type = NodalExtremeValue
     variable = pp_top
     execute_on = 'initial timestep_end'
   []

@@ -210,7 +210,7 @@
   # max(pp_top) = 1e7 Pa.  Subtract your reference pressure in post-processing
   # to obtain the overpressure for caprock-integrity screening.
   [max_pp]
-    type = NodalMaxValue
+    type = NodalExtremeValue
     variable = pp_top
     execute_on = 'initial timestep_end'
   []
