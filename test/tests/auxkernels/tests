@@ -1,0 +1,16 @@
+[Tests]
+  design = 'VEPlumeHeightAux.md VEGravityNumberAux.md'
+  issues = '#1'
+
+  [ve_auxkernels]
+    type = CSVDiff
+    input = 've_auxkernels.i'
+    csvdiff = 've_auxkernels_csv.csv'
+    rel_err = 1.0e-5
+    requirement = 'VEPlumeHeightAux shall compute h = sat_n * H / (1 - S_wr) and '
+                  'VEGravityNumberAux shall compute the gravity number '
+                  'k_v * delta_rho * g * H^2 / (mu_n * phi_bar * Q * L), '
+                  'both verified against analytical values for a uniform-field '
+                  'one-step test (h = 15 m, gamma = 0.005886).'
+  []
+[]
