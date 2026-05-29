@@ -346,3 +346,6 @@ binaryoutput
 # Nsight Systems profiling output
 *.nsys-rep
 *.sqlite
+
+# Project memory / AI assistant notes -- do not commit to the repository
+CLAUDE.md
