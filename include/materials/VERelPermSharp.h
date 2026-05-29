@@ -38,9 +38,9 @@ public:
 protected:
   void computeQpProperties() override;
 
-  const Real _S_wr;     ///< Residual water saturation in the CO2 zone [-].
-  const Real _krn_max;  ///< Maximum CO2 relative permeability [-].
-  const Real _krw_max;  ///< Maximum brine relative permeability [-].
+  const Real _S_wr;    ///< Residual water saturation in the CO2 zone [-].
+  const Real _krn_max; ///< Maximum CO2 relative permeability [-].
+  const Real _krw_max; ///< Maximum brine relative permeability [-].
 
   /// Depth-averaged saturations from VESaturation [0]=CO2, [1]=brine.
   const ADMaterialProperty<std::vector<Real>> & _saturation;

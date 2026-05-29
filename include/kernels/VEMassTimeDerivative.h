@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ADKernelValue.h"
+#include "ADTimeKernelValue.h"
 #include "VEDictator.h"
 
 /**
@@ -13,10 +13,18 @@
  *                                    dt
  *
  * where:
- *   H          = formation thickness             (ve_H, time-invariant)
- *   phi_bar    = depth-averaged porosity         (ve_phi_bar, time-invariant)
+ *   H       = formation thickness        (ve_H, time-invariant)
+ *   phi_bar = depth-averaged porosity    (ve_phi_bar, time-invariant)
  *   rho_c   = phase density              (ve_density, AD)
- *   S_n     = depth-averaged saturation (ve_saturation, AD)
+ *   S_c     = depth-averaged saturation  (ve_saturation, AD)
+ *
+ * Inherits from ADTimeKernelValue rather than ADKernelValue so that MOOSE
+ * correctly identifies this as a time-derivative contribution. This matters
+ * for predictor/corrector schemes and residual-norm reporting. The manual
+ * (new - old) / dt differencing is used rather than _u_dot so that the full
+ * nonlinear accumulation function H*phi*rho(p)*S(sat_n) is differenced
+ * correctly -- important once VEFluidStateBrineCO2 introduces
+ * pressure-dependent density.
  *
  * One instance per fluid phase in the input file. For the CO2 phase
  * (fluid_phase=0) assign to variable=sat_n; for the brine phase
@@ -24,7 +32,7 @@
  *
  * Jacobian assembled automatically via MOOSE AD -- no hand-coded derivatives.
  */
-class VEMassTimeDerivative : public ADKernelValue
+class VEMassTimeDerivative : public ADTimeKernelValue
 {
 public:
   static InputParameters validParams();

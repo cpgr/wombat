@@ -5,7 +5,7 @@ registerMooseObject("wombatApp", VEMassTimeDerivative);
 InputParameters
 VEMassTimeDerivative::validParams()
 {
-  InputParameters params = ADKernelValue::validParams();
+  InputParameters params = ADTimeKernelValue::validParams();
   params.addClassDescription(
       "Depth-integrated mass storage term for one fluid phase in a vertical-equilibrium "
       "simulation: d/dt(H * phi_bar * rho_c * S_c_bar). Jacobian computed automatically via AD.");
@@ -26,7 +26,7 @@ VEMassTimeDerivative::validParams()
 }
 
 VEMassTimeDerivative::VEMassTimeDerivative(const InputParameters & parameters)
-  : ADKernelValue(parameters),
+  : ADTimeKernelValue(parameters),
     _dictator(getUserObject<VEDictator>("VEDictator")),
     _fluid_phase(getParam<unsigned int>("fluid_phase")),
     _H(getMaterialProperty<Real>("ve_H")),
