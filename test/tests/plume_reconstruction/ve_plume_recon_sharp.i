@@ -1,20 +1,13 @@
-# Unit test for VEPlumeHeightAux and VEGravityNumberAux.
+# Unit test for VEPlumeReconstruction in sharp_interface mode.
 #
-# A flat formation (z_top = 0, z_bottom = -20 m, H = 20 m) is initialised
-# with a uniform depth-averaged CO2 saturation sat_n = 0.6 and uniform
-# pressure pp_top = 1e7 Pa.  Dirichlet BCs match the ICs on both ends, so
-# there is no pressure or saturation gradient -- the system is at steady
-# state and the solver converges in a single Newton step.
+# Flat formation: z_top = 0, z_bottom = -20 m, H = 20 m.
+# Uniform sat_n = 0.6, uniform pp_top = 1e7 Pa.  Dirichlet BCs match ICs;
+# no gradient, so the system is at steady state after one Newton step.
 #
-# Expected AuxVariable values (verified via ElementAverageValue):
-#
-#   h_plume = sat_n * H / (1 - S_wr)
-#           = 0.6 * 20 / (1 - 0.2)
-#           = 15.0 m
-#
-#   gamma_ve = k_v * delta_rho * g * H^2 / (mu_n * phi_bar * Q * L)
-#            = 1e-12 * 300 * 9.81 * 400 / (1e-3 * 0.2 * 1e-3 * 1000)
-#            = 0.005886
+# Expected plume thickness:
+#   h = sat_n * H / (1 - S_wr)
+#     = 0.6 * 20 / (1 - 0.2)
+#     = 15.0 m
 
 [Mesh]
   type = GeneratedMesh
@@ -56,9 +49,6 @@
   []
 []
 
-# ---------------------------------------------------------------------------
-# Geometry AuxVariables -- flat formation, no topography
-# ---------------------------------------------------------------------------
 [AuxVariables]
   [z_top]
     order = FIRST
@@ -74,27 +64,12 @@
     order = CONSTANT
     family = MONOMIAL
   []
-  [gamma_ve]
-    order = CONSTANT
-    family = MONOMIAL
-  []
 []
 
 [AuxKernels]
   [plume_height]
     type = VEPlumeHeightAux
     variable = h_plume
-    execute_on = 'TIMESTEP_END'
-  []
-  [gravity_number]
-    type = VEGravityNumberAux
-    variable = gamma_ve
-    k_v = 1.0e-12
-    delta_rho = 300.0
-    gravity = '0 0 -9.81'
-    mu_n = 1.0e-3
-    Q = 1.0e-3
-    L = 1000.0
     execute_on = 'TIMESTEP_END'
   []
 []
@@ -202,19 +177,10 @@
   nl_abs_tol = 1.0e-12
 []
 
-# ---------------------------------------------------------------------------
-# Verify AuxVariable values via ElementAverageValue postprocessors.
-# Both fields are uniform so the average equals the pointwise value.
-# ---------------------------------------------------------------------------
 [Postprocessors]
   [h_avg]
     type = ElementAverageValue
     variable = h_plume
-    execute_on = 'TIMESTEP_END'
-  []
-  [gamma_avg]
-    type = ElementAverageValue
-    variable = gamma_ve
     execute_on = 'TIMESTEP_END'
   []
 []

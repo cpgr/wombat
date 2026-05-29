@@ -1,20 +1,28 @@
-# Unit test for VEPlumeHeightAux and VEGravityNumberAux.
+# Unit test for VEPlumeReconstruction in capillary_fringe mode with
+# VECapillaryPressureTable.
 #
-# A flat formation (z_top = 0, z_bottom = -20 m, H = 20 m) is initialised
-# with a uniform depth-averaged CO2 saturation sat_n = 0.6 and uniform
-# pressure pp_top = 1e7 Pa.  Dirichlet BCs match the ICs on both ends, so
-# there is no pressure or saturation gradient -- the system is at steady
-# state and the solver converges in a single Newton step.
+# Flat formation: z_top = 0, z_bottom = -20 m, H = 20 m.
+# Uniform sat_n = 0.1, uniform pp_top = 1e7 Pa.  Dirichlet BCs match ICs.
 #
-# Expected AuxVariable values (verified via ElementAverageValue):
+# Fluid properties: rho_co2 = 700, rho_brine = 1020 kg/m3
+#   => delta_rho = 320 kg/m3
+#   => Pc_max = delta_rho * g * H = 320 * 9.81 * 20 = 62784 Pa
 #
-#   h_plume = sat_n * H / (1 - S_wr)
-#           = 0.6 * 20 / (1 - 0.2)
-#           = 15.0 m
+# Linear Pc table: Sw(Pc) = 1 - 0.8 * Pc / 62784
+#   pc_points = '0  15696  31392  47088  62784'
+#   sw_points = '1.0  0.8  0.6  0.4  0.2'
+#   (four equal intervals spanning [0, Pc_max])
 #
-#   gamma_ve = k_v * delta_rho * g * H^2 / (mu_n * phi_bar * Q * L)
-#            = 1e-12 * 300 * 9.81 * 400 / (1e-3 * 0.2 * 1e-3 * 1000)
-#            = 0.005886
+# Analytical solution for h:
+#   Sn(zeta) = 1 - Sw(Pc(zeta)) = 0.8 * delta_rho * g * zeta / Pc_max
+#            = 0.8 * zeta / H  = 0.04 * zeta
+#   sat_n_bar = (1/H) * integral_0^h Sn(zeta) dzeta
+#             = (1/20) * 0.04 * h^2 / 2
+#             = 0.001 * h^2
+#   => h = sqrt(sat_n / 0.001) = sqrt(0.1 / 0.001) = sqrt(100) = 10.0 m
+#
+# Because Sn(zeta) is linear, the 64-point trapezoidal rule is exact,
+# so Newton inversion returns h = 10.0 m to within convergence tolerance.
 
 [Mesh]
   type = GeneratedMesh
@@ -32,7 +40,13 @@
   [ve_dictator]
     type = VEDictator
     porous_flow_vars = 'pp_top sat_n'
-    ve_flavour = sharp_interface
+    ve_flavour = capillary_fringe
+  []
+  [ve_pc_table]
+    type = VECapillaryPressureTable
+    sat_lr = 0.2
+    pc_points = '0  15696  31392  47088  62784'
+    sw_points = '1.0  0.8  0.6  0.4  0.2'
   []
 []
 
@@ -52,13 +66,10 @@
   [sat_n_ic]
     type = ConstantIC
     variable = sat_n
-    value = 0.6
+    value = 0.1
   []
 []
 
-# ---------------------------------------------------------------------------
-# Geometry AuxVariables -- flat formation, no topography
-# ---------------------------------------------------------------------------
 [AuxVariables]
   [z_top]
     order = FIRST
@@ -74,27 +85,12 @@
     order = CONSTANT
     family = MONOMIAL
   []
-  [gamma_ve]
-    order = CONSTANT
-    family = MONOMIAL
-  []
 []
 
 [AuxKernels]
   [plume_height]
     type = VEPlumeHeightAux
     variable = h_plume
-    execute_on = 'TIMESTEP_END'
-  []
-  [gravity_number]
-    type = VEGravityNumberAux
-    variable = gamma_ve
-    k_v = 1.0e-12
-    delta_rho = 300.0
-    gravity = '0 0 -9.81'
-    mu_n = 1.0e-3
-    Q = 1.0e-3
-    L = 1000.0
     execute_on = 'TIMESTEP_END'
   []
 []
@@ -140,13 +136,13 @@
     type = DirichletBC
     variable = sat_n
     boundary = left
-    value = 0.6
+    value = 0.1
   []
   [sat_right]
     type = DirichletBC
     variable = sat_n
     boundary = right
-    value = 0.6
+    value = 0.1
   []
 []
 
@@ -168,7 +164,7 @@
   [fluid_props]
     type = VEFluidPropertiesConst
     rho_co2 = 700.0
-    rho_brine = 1000.0
+    rho_brine = 1020.0
     mu_co2 = 1.0e-3
     mu_brine = 1.0e-3
   []
@@ -178,8 +174,10 @@
   []
   [plume_reconstruction]
     type = VEPlumeReconstruction
+    mode = capillary_fringe
     sat_n = sat_n
     S_wr = 0.2
+    pc_uo = ve_pc_table
   []
   [relperm]
     type = VERelPermSharp
@@ -202,19 +200,10 @@
   nl_abs_tol = 1.0e-12
 []
 
-# ---------------------------------------------------------------------------
-# Verify AuxVariable values via ElementAverageValue postprocessors.
-# Both fields are uniform so the average equals the pointwise value.
-# ---------------------------------------------------------------------------
 [Postprocessors]
   [h_avg]
     type = ElementAverageValue
     variable = h_plume
-    execute_on = 'TIMESTEP_END'
-  []
-  [gamma_avg]
-    type = ElementAverageValue
-    variable = gamma_ve
     execute_on = 'TIMESTEP_END'
   []
 []

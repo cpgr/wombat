@@ -1,0 +1,27 @@
+[Tests]
+  design = 'VEPlumeReconstruction.md VECapillaryPressureTable.md'
+  issues = '#1'
+
+  [ve_plume_recon_sharp]
+    type = CSVDiff
+    input = 've_plume_recon_sharp.i'
+    csvdiff = 've_plume_recon_sharp_csv.csv'
+    rel_err = 1.0e-5
+    requirement = 'VEPlumeReconstruction in sharp_interface mode shall compute '
+                  'h = sat_n * H / (1 - S_wr) = 0.6 * 20 / (1 - 0.2) = 15.0 m '
+                  'for a uniform-field one-step test.'
+  []
+
+  [ve_plume_recon_cf]
+    type = CSVDiff
+    input = 've_plume_recon_cf.i'
+    csvdiff = 've_plume_recon_cf_csv.csv'
+    rel_err = 1.0e-5
+    requirement = 'VEPlumeReconstruction in capillary_fringe mode shall recover '
+                  'h = 10.0 m by Newton inversion of the depth-averaged saturation '
+                  'integral for a linear Pc table (Sw = 1 - 0.8*Pc/Pc_max) with '
+                  'sat_n = 0.1, H = 20 m, delta_rho = 320 kg/m3, g = 9.81 m/s2. '
+                  'The trapezoidal integrator is exact for linear Sn(zeta), giving '
+                  'sat_n_bar = 0.8*h^2/(2*H^2) = 0.1 exactly at h = 10 m.'
+  []
+[]
