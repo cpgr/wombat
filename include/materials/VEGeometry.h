@@ -5,18 +5,37 @@
 /**
  * VEGeometry
  *
- * Reads the formation top and bottom surface elevations from coupled
- * AuxVariables (supplied by the Petrel-to-2D upscaling workflow via an
- * Exodus file) and computes the two geometric quantities that all other
- * VE materials and kernels depend on:
+ * Computes two geometric quantities consumed by all other VE materials and kernels:
  *
- *   ve_H          = z_top - z_bottom   [m]
- *   ve_grad_z_top = grad(z_top)        [m/m]  (2D horizontal gradient)
+ *   ve_H          -- formation thickness [m]
+ *   ve_grad_z_top -- 2-D horizontal gradient of the top-surface elevation [m/m]
  *
- * ve_grad_z_top drives the buoyancy migration term in VEAdvectiveFlux.
- * Both properties are plain Real (not AD) because formation geometry is
- * fixed -- it carries no Jacobian entries with respect to the primary
- * variables.
+ * ve_grad_z_top enters every VEAdvectiveFlux kernel as the buoyancy drive
+ * rho_c * g * grad(z_T).  Both properties are plain Real (not AD) because
+ * formation geometry is fixed and carries no Jacobian with respect to the
+ * primary flow variables.
+ *
+ * Two input modes are supported; exactly one must be chosen:
+ *
+ *   top_bottom (default)
+ *     Requires: z_top, z_bottom  (both nodal AuxVariables)
+ *     Computes: ve_H = z_top - z_bottom
+ *     Use for: synthetic / CSV-loaded geometries where the bottom surface
+ *     elevation is explicitly available.
+ *
+ *   thickness
+ *     Requires: z_top, H  (both nodal AuxVariables)
+ *     Computes: ve_H = H  (used directly)
+ *     Use for: real Exodus meshes from the Petrel upscaling workflow, where
+ *     the workflow supplies H (column-averaged thickness) as a native field
+ *     alongside phi_bar, K_up, etc.  z_bottom is not needed and need not be
+ *     present on the mesh.
+ *
+ * In both modes ve_grad_z_top is computed via coupledGradient("z_top"),
+ * which interpolates the nodal z_top AuxVariable to quadrature points using
+ * the same LAGRANGE shape functions.  z_top must therefore be declared as a
+ * LAGRANGE FIRST ORDER AuxVariable; CONSTANT MONOMIAL would produce a zero
+ * gradient and silently kill the entire buoyancy drive.
  */
 class VEGeometry : public Material
 {
@@ -27,19 +46,20 @@ public:
 protected:
   void computeQpProperties() override;
 
-  // --- Inputs: coupled AuxVariables from the Exodus mesh ---
+  // --- Input mode ---
+  const bool _thickness_mode; ///< true = thickness mode, false = top_bottom mode
 
-  /// Top surface elevation z_top [m] (nodal AuxVar from Exodus).
-  const VariableValue & _z_top;
-
-  /// Gradient of z_top [m/m] -- MOOSE interpolates this from nodal values.
+  // --- Inputs always required ---
+  const VariableValue &    _z_top;
   const VariableGradient & _grad_z_top_var;
 
-  /// Bottom surface elevation z_bottom [m] (nodal AuxVar from Exodus).
-  const VariableValue & _z_bottom;
+  // --- Inputs required in top_bottom mode ---
+  const VariableValue * const _z_bottom; ///< nullptr in thickness mode
 
-  // --- Outputs: material properties consumed by other VE objects ---
+  // --- Inputs required in thickness mode ---
+  const VariableValue * const _H_var; ///< nullptr in top_bottom mode
 
-  MaterialProperty<Real> & _H;
+  // --- Outputs ---
+  MaterialProperty<Real> &         _H;
   MaterialProperty<RealGradient> & _grad_z_top;
 };
