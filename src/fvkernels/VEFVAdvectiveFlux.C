@@ -29,11 +29,13 @@ VEFVAdvectiveFlux::validParams()
   params.addRequiredParam<MooseFunctorName>("z_bottom",
       "Bottom-surface elevation z_B [m] as an FV variable. H = z_top - z_bottom.");
 
-  MooseEnum advected_interp_method("average upwind", "upwind");
+  MooseEnum advected_interp_method("average upwind vanLeer min_mod sou quick venkatakrishnan",
+                                   "upwind");
   params.addParam<MooseEnum>("advected_interp_method", advected_interp_method,
-      "Face interpolation for the advected relperm kr_c. 'upwind' (default) takes "
-      "the upstream value; 'average' is a linear interpolation (unstabilised, "
-      "verification only).");
+      "Face interpolation for the advected relperm kr_c. 'upwind' (default, first "
+      "order) takes the upstream value; 'average' is unstabilised central "
+      "(verification only); 'vanLeer'/'min_mod'/'sou'/'quick'/'venkatakrishnan' are "
+      "second-order TVD limiters that sharpen the plume front (transient only).");
 
   // Two ghost layers so functor gradient reconstruction and upwind face
   // evaluation are available across the face, including in parallel.
