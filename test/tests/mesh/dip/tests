@@ -1,0 +1,62 @@
+[Tests]
+  design = 'VEGeometry.md'
+  issues = '#1'
+
+  [ve_geometry_dip_injection]
+    type = CSVDiff
+    input = 'dip_injection.i'
+    csvdiff = 'dip_injection_csv.csv'
+    cli_args = 'Executioner/end_time=5e4'
+    rel_err = 1.0e-4
+    abs_zero = 1.0e-6
+    requirement = 'CO2 injected at the downdip left boundary shall migrate updip under '
+                  'buoyancy on a 2-D planar surface with dip in both x and y. Over the '
+                  'shortened regression window (5 steps) the domain integral of sat_n shall '
+                  'conserve the injected mass (co2_integral vs analytical_mass) to within '
+                  'rel_err = 1e-4, the analytical gravity-nose position (v_Nx = 1.096e-5 m/s) '
+                  'shall be reproduced, and the monitoring points ahead of the early-time '
+                  'nose shall remain zero.'
+  []
+
+  [ve_geometry_dip_injection_x]
+    type = CSVDiff
+    input = 'dip_injection_x.i'
+    csvdiff = 'dip_injection_x_csv.csv'
+    cli_args = 'Executioner/end_time=5e4'
+    rel_err = 1.0e-4
+    abs_zero = 1.0e-6
+    requirement = 'CO2 injected at the centre 10 m of the left (downdip) boundary shall '
+                  'migrate updip in the +x direction on a surface with x-dip only. Over the '
+                  'shortened regression window (5 steps) the domain integral of sat_n shall '
+                  'conserve the injected mass (co2_integral vs analytical_mass) to within '
+                  'rel_err = 1e-4, and the analytical gravity-nose position shall be '
+                  'reproduced; the centreline monitoring points ahead of the early-time nose '
+                  'remain zero.'
+  []
+
+  [ve_geometry_dip_injection_y]
+    type = CSVDiff
+    input = 'dip_injection_y.i'
+    csvdiff = 'dip_injection_y_csv.csv'
+    cli_args = 'Executioner/end_time=5e4'
+    rel_err = 1.0e-4
+    abs_zero = 1.0e-6
+    requirement = 'CO2 injected at the centre 10 m of the bottom (downdip) boundary shall '
+                  'migrate updip in the +y direction on a surface with y-dip only '
+                  '(90-degree rotation of dip_injection_x.i). Over the shortened regression '
+                  'window (5 steps) the domain integral of sat_n shall conserve the injected '
+                  'mass (co2_integral vs analytical_mass) to within rel_err = 1e-4, and the '
+                  'analytical gravity-nose position shall be reproduced -- identical to the '
+                  'x-dip case by symmetry.'
+  []
+
+  [ve_geometry_dip]
+    type = CSVDiff
+    input = 'dip.i'
+    csvdiff = 'dip_csv.csv'
+    rel_err = 1.0e-5
+    requirement = 'VEGeometry shall recover the exact gradient of a planar top surface '
+                  'dipping in both x and y: ve_grad_z_top_x = -0.01, '
+                  've_grad_z_top_y = -0.005, and ve_H = 100 m everywhere.'
+  []
+[]
