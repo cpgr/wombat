@@ -1,0 +1,40 @@
+[Tests]
+  design = 'VEAdvectiveFluxS.md VEFVAdvectiveFlux.md VEUpscaledCapPressure.md VEFVCapPressure.md'
+  issues = '#1'
+
+  # McWhorter-Sunada semi-analytical verification of the capillary term's SIGN
+  # and MAGNITUDE (which the bl_flat_capillary Jacobian tests cannot check). 1D
+  # counter-current capillary imbibition (constant per-phase densities, flat
+  # formation, closed far boundary => total volume flux q_t = 0) reduces the CO2
+  # equation to phi dS/dt = d/dx(D(S) dS/dx) with D(S) = (K*C/mu)*S*(1-S),
+  # C = (rho_w-rho_n)*g*H/(1-S_wr). The reference is the Boltzmann self-similar
+  # profile S(x/sqrt(t)) from mcwhorter_reference.py (cross-checked against an
+  # independent method-of-lines solve to L2 ~ 2e-3). co2_l2_error is
+  # ||sat_n - S_ref|| at t = 1e5 s; gold 0 with abs_zero = 0.03 asserts a match
+  # (a wrong capillary sign gives anti-diffusion, L2 ~ O(0.3)).
+
+  [mcwhorter_fe]
+    type = CSVDiff
+    input = 'mcwhorter_fe.i'
+    csvdiff = 'mcwhorter_fe_csv.csv'
+    abs_zero = 0.03
+    requirement = 'VEAdvectiveFluxS with capillary=true shall reproduce the '
+                  'McWhorter-Sunada self-similar counter-current capillary '
+                  'imbibition profile: the L2 error of sat_n against the '
+                  'semi-analytical reference shall be below 0.03 at t = 1e5 s, '
+                  'validating the sign and magnitude of the d(Pc^up)/d(sat_n) '
+                  'capillary-diffusion term.'
+  []
+
+  [mcwhorter_fv]
+    type = CSVDiff
+    input = 'mcwhorter_fv.i'
+    csvdiff = 'mcwhorter_fv_csv.csv'
+    abs_zero = 0.03
+    requirement = 'VEFVAdvectiveFlux with capillary=true and VEFVCapPressure shall '
+                  'reproduce the McWhorter-Sunada self-similar counter-current '
+                  'capillary imbibition profile: the L2 error of sat_n against the '
+                  'semi-analytical reference shall be below 0.03 at t = 1e5 s, '
+                  'validating the sign and magnitude of the grad(Pc^up) term.'
+  []
+[]

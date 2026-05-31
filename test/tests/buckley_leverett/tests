@@ -95,6 +95,6 @@
     requirement = 'VEFVAdvectiveFlux with capillary=true and VEFVCapPressure shall '
                   'produce a Jacobian consistent with the PETSc finite-difference '
                   'approximation to within ratio tolerance 1e-7, confirming that the '
-                  'grad(Pc^up).n functor gradient is correctly assembled.'
+                  'capillary term ve_dPcup_dsatn * grad(sat_n).n is correctly assembled.'
   []
 []

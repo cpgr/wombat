@@ -41,9 +41,9 @@ VEFVAdvectiveFlux::validParams()
       "capillary",
       false,
       "If true, adds grad(Pc^up).n to the CO2 (fluid_phase=0) Darcy potential "
-      "gradient. Has no effect on the brine equation. Requires VEFVCapPressure "
-      "to be present in [FunctorMaterials] (it declares the ve_pc_up functor). "
-      "Default OFF so existing sharp-interface inputs are unchanged.");
+      "gradient as ve_dPcup_dsatn(face) * grad(sat_n).n. Has no effect on the brine "
+      "equation. Requires VEFVCapPressure in [FunctorMaterials] (declares the "
+      "ve_dPcup_dsatn functor). Default OFF so existing inputs are unchanged.");
 
   // Two ghost layers so functor gradient reconstruction and upwind face
   // evaluation are available across the face, including in parallel.
@@ -66,7 +66,8 @@ VEFVAdvectiveFlux::VEFVAdvectiveFlux(const InputParameters & parameters)
     _z_bottom(getFunctor<ADReal>("z_bottom")),
     _relperm(getFunctor<ADReal>(
         getParam<unsigned int>("fluid_phase") == 0 ? "ve_relperm_n" : "ve_relperm_w")),
-    _pc_up(_capillary && _fluid_phase == 0 ? &getFunctor<ADReal>("ve_pc_up") : nullptr),
+    _dPcup_dsatn(_capillary && _fluid_phase == 0 ? &getFunctor<ADReal>("ve_dPcup_dsatn")
+                                                 : nullptr),
     _K_up(getMaterialProperty<RealTensorValue>("ve_K_up")),
     _density(getADMaterialProperty<std::vector<Real>>("ve_density")),
     _viscosity(getADMaterialProperty<std::vector<Real>>("ve_viscosity"))
@@ -97,7 +98,11 @@ VEFVAdvectiveFlux::computeQpResidual()
   const ADReal mu_c = _viscosity[_qp][_fluid_phase];
   ADReal dphi_dn = grad_pp_n + rho_c * _gravity_magnitude * grad_zt_n;
   if (_capillary && _fluid_phase == 0)
-    dphi_dn += _pc_up->gradient(face, state) * _normal;
+    // grad(Pc^up).n = d(Pc^up)/d(sat_n) * grad(sat_n).n. gradUDotNormal() is the
+    // sat_n variable's boundary-aware face-normal gradient (the FVDiffusion idiom),
+    // so a Dirichlet sat_n inlet drives capillary imbibition. The coefficient is a
+    // material-functor VALUE (no material-functor gradient is taken).
+    dphi_dn += (*_dPcup_dsatn)(face, state) * gradUDotNormal(state, false);
   const ADReal darcy_velocity_n = -K_nn * dphi_dn;
 
   // --- Upwind relperm via the functor at the upwind face ---

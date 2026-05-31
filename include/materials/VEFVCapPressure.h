@@ -11,9 +11,16 @@
  * the upscaled capillary pressure via the standard MOOSE FV reconstruction.
  *
  * Sharp-interface formula (Nordbotten-Celia):
- *   Pc^up(r,t) = delta_rho * |g| * sat_n(r,t) * H(r,t) / (1 - S_wr) + pc_entry
+ *   Pc^up(r,t)        = delta_rho * |g| * sat_n(r,t) * H(r,t) / (1 - S_wr) + pc_entry
+ *   ve_dPcup_dsatn    = delta_rho * |g| * H(r,t) / (1 - S_wr)
  *
  * where H(r,t) = z_top(r,t) - z_bottom(r,t).
+ *
+ * VEFVAdvectiveFlux consumes ve_dPcup_dsatn (not ve_pc_up) and forms
+ * grad(Pc^up).n = ve_dPcup_dsatn(face) * grad(sat_n).n, using the sat_n VARIABLE
+ * gradient (boundary-aware). ve_pc_up is published for diagnostics only: taking
+ * the Green-Gauss gradient of a material functor does not pick up the sat_n
+ * Dirichlet BC at a boundary face, so it must not be used for the flux.
  *
  * Parameters:
  *   sat_n     -- name of the FV saturation functor (typically the variable name)
