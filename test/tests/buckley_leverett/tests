@@ -30,4 +30,18 @@
                   'relative permeability drives inflow at the fixed-saturation '
                   'boundary.'
   []
+
+  [bl_flat_fv_vanleer]
+    type = CSVDiff
+    input = 'bl_flat_fv.i'
+    csvdiff = 'bl_flat_fv_vanleer.csv'
+    cli_args = 'Executioner/end_time=5000 Outputs/file_base=bl_flat_fv_vanleer '
+               'FVKernels/co2_flux/advected_interp_method=vanLeer '
+               'FVKernels/brine_flux/advected_interp_method=vanLeer'
+    rel_err = 1.0e-5
+    requirement = 'VEFVAdvectiveFlux with the VanLeer second-order TVD limiter shall reproduce '
+                  'the analytical Buckley-Leverett mass balance (co2_volume = 5e-4*t); the '
+                  'limiter sharpens the saturation front while the conserved integral is '
+                  'interpolation-scheme independent.'
+  []
 []

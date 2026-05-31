@@ -28,4 +28,19 @@
                   'with cell-by-cell mass conservation (co2_integral vs analytical_mass) '
                   'to within rel_err = 1e-4 at every reported timestep.'
   []
+
+  [nc_sloped_fv_vanleer]
+    type = CSVDiff
+    input = 'nc_sloped_fv.i'
+    csvdiff = 'nc_sloped_fv_vanleer.csv'
+    cli_args = 'Executioner/end_time=5e4 Outputs/file_base=nc_sloped_fv_vanleer '
+               'FVKernels/co2_flux/advected_interp_method=vanLeer '
+               'FVKernels/brine_flux/advected_interp_method=vanLeer'
+    rel_err = 1.0e-4
+    abs_zero = 1.0e-6
+    requirement = 'VEFVAdvectiveFlux with the VanLeer second-order TVD limiter shall solve the '
+                  'sloped-aquifer injection with the same conserved CO2 mass and analytical '
+                  'gravity-nose as the first-order upwind scheme, confirming the higher-order '
+                  'interpolation path on a 1-D buoyancy-driven case.'
+  []
 []
