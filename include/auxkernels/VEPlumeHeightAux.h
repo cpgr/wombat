@@ -20,5 +20,5 @@ public:
 protected:
   Real computeValue() override;
 
-  const MaterialProperty<Real> & _h;
+  const ADMaterialProperty<Real> & _h;
 };

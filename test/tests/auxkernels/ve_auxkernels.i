@@ -108,7 +108,7 @@
     execute_on = 'TIMESTEP_END'
   []
   [cap_pressure]
-    type = MaterialRealAux
+    type = ADMaterialRealAux
     variable = pc_up
     property = ve_pc_up
     execute_on = 'TIMESTEP_END'

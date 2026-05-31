@@ -1,5 +1,5 @@
 [Tests]
-  design = 'VEMassTimeDerivative.md VEAdvectiveFluxS.md VEAdvectiveFluxP.md'
+  design = 'VEMassTimeDerivative.md VEAdvectiveFluxS.md VEAdvectiveFluxP.md VEFVAdvectiveFlux.md VEUpscaledCapPressure.md VEFVCapPressure.md'
   issues = '#1'
 
   [bl_flat]
@@ -56,5 +56,45 @@
                   'the analytical Buckley-Leverett mass balance (co2_volume = 5e-4*t); the '
                   'limiter sharpens the saturation front while the conserved integral is '
                   'interpolation-scheme independent.'
+  []
+
+  # --- Two-pressure VE (capillary diffusion) ---
+  # Note: McWhorter-Sunada profile comparison deferred until the semi-analytical
+  # reference solution is implemented. These Jacobian tests check AD-vs-FD
+  # consistency of the capillary term.
+  #
+  # The Jacobian is evaluated at a strictly-interior uniform sat_n = 0.5 (IC and
+  # BC overridden) so that the sharp-interface relperm s_eff = sat_n/(1-S_wr) is
+  # away from both clamp boundaries (0 and 1). At sat_n = 0 (the physical IC of
+  # bl_flat_capillary_fe.i) the analytical relperm derivative is 0 at the clamp
+  # kink, while the one-sided FD steps into the active region and sees slope
+  # 1/(1-S_wr): a spurious AD-vs-FD mismatch unrelated to the capillary term.
+  # Perturbations about the uniform 0.5 state still populate every Jacobian
+  # coupling, including the capillary mobility*K*d(Pc^up)/dS*grad(phi_j) entries.
+
+  [bl_flat_capillary_fe_jacobian]
+    type = PetscJacobianTester
+    input = 'bl_flat_capillary_fe.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-4
+    cli_args = 'Executioner/end_time=1000 Executioner/dt=500 -mat_fd_type ds '
+               'ICs/sat_n_ic/value=0.5 BCs/sat_n_left/value=0.5'
+    requirement = 'VEAdvectiveFluxS with capillary=true shall produce a Jacobian '
+                  'consistent with the PETSc finite-difference approximation to within '
+                  'ratio tolerance 1e-7, confirming that the AD derivative of the '
+                  'd(Pc^up)/d(sat_n)*grad(sat_n) capillary-diffusion term is correct.'
+  []
+
+  [bl_flat_capillary_fv_jacobian]
+    type = PetscJacobianTester
+    input = 'bl_flat_capillary_fv.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-4
+    cli_args = 'Executioner/end_time=1000 Executioner/dt=500 -mat_fd_type ds '
+               'ICs/sat_n_ic/value=0.5 FVBCs/sat_n_left/value=0.5'
+    requirement = 'VEFVAdvectiveFlux with capillary=true and VEFVCapPressure shall '
+                  'produce a Jacobian consistent with the PETSc finite-difference '
+                  'approximation to within ratio tolerance 1e-7, confirming that the '
+                  'grad(Pc^up).n functor gradient is correctly assembled.'
   []
 []

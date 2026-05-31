@@ -48,6 +48,10 @@ protected:
   const unsigned int _fluid_phase;
   const Real _gravity_magnitude;
 
+  /// If true, adds grad(Pc^up).n to the CO2 (phase 0) Darcy potential.
+  /// Requires VEFVCapPressure to be present (declares the ve_pc_up functor).
+  const bool _capillary;
+
   /// Face interpolation scheme for the advected relperm (default Upwind).
   Moose::FV::InterpMethod _advected_interp_method;
 
@@ -56,6 +60,8 @@ protected:
   const Moose::Functor<ADReal> & _z_top;
   const Moose::Functor<ADReal> & _z_bottom;
   const Moose::Functor<ADReal> & _relperm; ///< ve_relperm_n (phase 0) or ve_relperm_w (phase 1)
+  /// Upscaled capillary pressure functor (from VEFVCapPressure); null when capillary=false.
+  const Moose::Functor<ADReal> * const _pc_up;
 
   // --- Elem-side material properties (constant; valid on boundary faces) ---
   const MaterialProperty<RealTensorValue> & _K_up;

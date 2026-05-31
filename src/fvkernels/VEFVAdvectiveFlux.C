@@ -37,6 +37,14 @@ VEFVAdvectiveFlux::validParams()
       "(verification only); 'vanLeer'/'min_mod'/'sou'/'quick'/'venkatakrishnan' are "
       "second-order TVD limiters that sharpen the plume front (transient only).");
 
+  params.addParam<bool>(
+      "capillary",
+      false,
+      "If true, adds grad(Pc^up).n to the CO2 (fluid_phase=0) Darcy potential "
+      "gradient. Has no effect on the brine equation. Requires VEFVCapPressure "
+      "to be present in [FunctorMaterials] (it declares the ve_pc_up functor). "
+      "Default OFF so existing sharp-interface inputs are unchanged.");
+
   // Two ghost layers so functor gradient reconstruction and upwind face
   // evaluation are available across the face, including in parallel.
   params.set<unsigned short>("ghost_layers") = 2;
@@ -50,6 +58,7 @@ VEFVAdvectiveFlux::VEFVAdvectiveFlux(const InputParameters & parameters)
     _dictator(getUserObject<VEDictator>("VEDictator")),
     _fluid_phase(getParam<unsigned int>("fluid_phase")),
     _gravity_magnitude(getParam<RealVectorValue>("gravity").norm()),
+    _capillary(getParam<bool>("capillary")),
     _advected_interp_method(
         Moose::FV::selectInterpolationMethod(getParam<MooseEnum>("advected_interp_method"))),
     _pp_top(getFunctor<ADReal>("pp_top")),
@@ -57,6 +66,7 @@ VEFVAdvectiveFlux::VEFVAdvectiveFlux(const InputParameters & parameters)
     _z_bottom(getFunctor<ADReal>("z_bottom")),
     _relperm(getFunctor<ADReal>(
         getParam<unsigned int>("fluid_phase") == 0 ? "ve_relperm_n" : "ve_relperm_w")),
+    _pc_up(_capillary && _fluid_phase == 0 ? &getFunctor<ADReal>("ve_pc_up") : nullptr),
     _K_up(getMaterialProperty<RealTensorValue>("ve_K_up")),
     _density(getADMaterialProperty<std::vector<Real>>("ve_density")),
     _viscosity(getADMaterialProperty<std::vector<Real>>("ve_viscosity"))
@@ -85,7 +95,9 @@ VEFVAdvectiveFlux::computeQpResidual()
   // --- Darcy potential gradient . normal, and advecting flux ---
   const ADReal rho_c = _density[_qp][_fluid_phase];
   const ADReal mu_c = _viscosity[_qp][_fluid_phase];
-  const ADReal dphi_dn = grad_pp_n + rho_c * _gravity_magnitude * grad_zt_n;
+  ADReal dphi_dn = grad_pp_n + rho_c * _gravity_magnitude * grad_zt_n;
+  if (_capillary && _fluid_phase == 0)
+    dphi_dn += _pc_up->gradient(face, state) * _normal;
   const ADReal darcy_velocity_n = -K_nn * dphi_dn;
 
   // --- Upwind relperm via the functor at the upwind face ---

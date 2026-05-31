@@ -11,17 +11,19 @@
  *   Pc^up = (rho_w - rho_n) * |g| * h  +  pc_entry
  *
  * The (rho_w - rho_n) * |g| * h term is the buoyant pressure difference across a
- * CO2 column of height h (sharp-interface upscaled Pc; Nordbotten & Celia). The
- * optional constant pc_entry adds a capillary entry/fringe offset at the plume
- * top -- a minimal capillary-fringe correction. A full Nordbotten & Dahle fringe
- * integral (consuming the column Pc UserObject, paralleling the capillary_fringe
- * mode of VEPlumeReconstruction) is a future extension.
+ * CO2 column of height h (sharp-interface upscaled Pc; Nordbotten & Celia).
  *
- * Reads ve_h (from VEPlumeReconstruction) and ve_density. Like ve_h, ve_pc_up is
- * currently a plain (non-AD) Real diagnostic property: it is not yet in the
- * nonlinear residual. When ve_h is upgraded to an ADMaterialProperty (see the
- * VEPlumeReconstruction notes) so that Pc^up can enter a two-pressure flux, this
- * property should likewise become AD so d(Pc^up)/d(sat_n) is captured.
+ * Also declares ve_dPcup_dsatn = d(Pc^up)/d(sat_n) = (rho_w-rho_n)*|g|*H/(1-S_wr)
+ * (sharp-interface formula), consumed by VEAdvectiveFluxS when capillary=true to
+ * form grad(Pc^up) = ve_dPcup_dsatn * grad(sat_n) at each quadrature point.
+ *
+ * Both ve_pc_up and ve_dPcup_dsatn are AD properties so the Jacobian propagates
+ * through density (when density becomes pressure-dependent in a future upgrade).
+ *
+ * Reads:
+ *   - ve_h       : ADMaterialProperty<Real> from VEPlumeReconstruction
+ *   - ve_density : ADMaterialProperty<std::vector<Real>> from VEFluidProperties
+ *   - ve_H       : MaterialProperty<Real> from VEGeometry (for ve_dPcup_dsatn)
  */
 class VEUpscaledCapPressure : public Material
 {
@@ -32,16 +34,14 @@ public:
 protected:
   void computeQpProperties() override;
 
-  /// Scalar magnitude of gravity [m/s2].
   const Real _gravity_magnitude;
-  /// Capillary entry/fringe pressure added at the plume top [Pa].
   const Real _pc_entry;
+  const Real _S_wr;
 
-  /// Reconstructed CO2 plume thickness h [m] (from VEPlumeReconstruction).
-  const MaterialProperty<Real> & _h;
-  /// Depth-averaged phase densities [kg/m3]: [0] = CO2, [1] = brine.
+  const ADMaterialProperty<Real> & _h;
   const ADMaterialProperty<std::vector<Real>> & _density;
+  const MaterialProperty<Real> & _H;
 
-  /// Upscaled capillary pressure Pc^up [Pa].
-  MaterialProperty<Real> & _pc_up;
+  ADMaterialProperty<Real> & _pc_up;
+  MaterialProperty<Real> & _dPcup_dsatn;
 };

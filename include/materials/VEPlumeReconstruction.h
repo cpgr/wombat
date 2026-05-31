@@ -53,7 +53,7 @@ protected:
   Real satNBar(Real h, Real H, Real delta_rho) const;
 
   const MooseEnum _mode;
-  const VariableValue & _sat_n;
+  const ADVariableValue & _sat_n;
   const MaterialProperty<Real> & _H;
   const Real _S_wr;
 
@@ -62,5 +62,5 @@ protected:
   const ADMaterialProperty<std::vector<Real>> & _density;
   const Real _gravity_magnitude;
 
-  MaterialProperty<Real> & _h;
+  ADMaterialProperty<Real> & _h;
 };

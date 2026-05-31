@@ -40,13 +40,13 @@ VEPlumeReconstruction::validParams()
 VEPlumeReconstruction::VEPlumeReconstruction(const InputParameters & parameters)
   : Material(parameters),
     _mode(getParam<MooseEnum>("mode")),
-    _sat_n(coupledValue("sat_n")),
+    _sat_n(adCoupledValue("sat_n")),
     _H(getMaterialProperty<Real>("ve_H")),
     _S_wr(getParam<Real>("S_wr")),
     _pc_uo(nullptr),
     _density(getADMaterialProperty<std::vector<Real>>("ve_density")),
     _gravity_magnitude(getParam<RealVectorValue>("gravity").norm()),
-    _h(declareProperty<Real>("ve_h"))
+    _h(declareADProperty<Real>("ve_h"))
 {
   if (_mode == "capillary_fringe")
   {
@@ -78,36 +78,52 @@ VEPlumeReconstruction::satNBar(Real h, Real H, Real delta_rho) const
 void
 VEPlumeReconstruction::computeQpProperties()
 {
-  Real h;
+  const Real H = _H[_qp];
 
   if (_mode == "sharp_interface")
   {
-    h = _sat_n[_qp] * _H[_qp] / (1.0 - _S_wr);
+    // Natural AD propagation: d(h)/d(sat_n_dof) = H/(1-S_wr) * d(sat_n)/d(dof).
+    const ADReal h = _sat_n[_qp] * H / (1.0 - _S_wr);
+    if (MetaPhysicL::raw_value(h) <= 0.0)
+      _h[_qp] = ADReal(0.0);
+    else if (MetaPhysicL::raw_value(h) >= H)
+      _h[_qp] = ADReal(H);
+    else
+      _h[_qp] = h;
   }
   else
   {
-    // Newton inversion: find h such that satNBar(h, H, delta_rho) = sat_n_qp.
-    //   F(h)  = satNBar(h, H, delta_rho) - sat_n_qp
-    //   F'(h) = S_n(h) / H                          (Leibniz rule on the integral)
-    const Real H = _H[_qp];
-    const Real target = _sat_n[_qp];
+    // Newton inversion on raw values. Derivative seeded manually via the
+    // inverse function theorem: d(h)/d(sat_n) = H / S_n(h).
+    const Real raw_sat = MetaPhysicL::raw_value(_sat_n[_qp]);
     const Real delta_rho = MetaPhysicL::raw_value(_density[_qp][1]) -
                            MetaPhysicL::raw_value(_density[_qp][0]);
 
-    h = std::max(0.0, std::min(target * H / (1.0 - _S_wr), H)); // warm start
+    Real h_val = std::max(0.0, std::min(raw_sat * H / (1.0 - _S_wr), H)); // warm start
 
     for (unsigned int iter = 0; iter < 20; ++iter)
     {
-      const Real F = satNBar(h, H, delta_rho) - target;
+      const Real F = satNBar(h_val, H, delta_rho) - raw_sat;
       if (std::abs(F) < 1.0e-12)
         break;
-      const Real Sn_top = 1.0 - _pc_uo->saturation(delta_rho * _gravity_magnitude * h);
+      const Real Sn_top = 1.0 - _pc_uo->saturation(delta_rho * _gravity_magnitude * h_val);
       if (Sn_top < 1.0e-14)
-        break; // plume top is at residual CO2; can't improve further
-      h -= F * H / Sn_top;
-      h = std::max(0.0, std::min(h, H));
+        break;
+      h_val -= F * H / Sn_top;
+      h_val = std::max(0.0, std::min(h_val, H));
+    }
+
+    if (h_val <= 0.0 || h_val >= H)
+    {
+      _h[_qp] = ADReal(h_val);
+    }
+    else
+    {
+      // Linearise: h(sat_n) ~= h_val + dh/dsatn * (sat_n - raw_sat).
+      // Value part = h_val, derivative = (H/Sn_h) * d(sat_n)/d(dof).
+      const Real Sn_h = 1.0 - _pc_uo->saturation(delta_rho * _gravity_magnitude * h_val);
+      const Real dh_dsatn = (Sn_h > 1.0e-14) ? H / Sn_h : H / 1.0e-14;
+      _h[_qp] = h_val + dh_dsatn * (_sat_n[_qp] - raw_sat);
     }
   }
-
-  _h[_qp] = std::max(0.0, std::min(h, _H[_qp]));
 }

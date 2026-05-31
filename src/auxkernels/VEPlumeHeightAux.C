@@ -18,12 +18,12 @@ VEPlumeHeightAux::validParams()
 
 VEPlumeHeightAux::VEPlumeHeightAux(const InputParameters & parameters)
   : AuxKernel(parameters),
-    _h(getMaterialProperty<Real>("ve_h"))
+    _h(getADMaterialProperty<Real>("ve_h"))
 {
 }
 
 Real
 VEPlumeHeightAux::computeValue()
 {
-  return _h[_qp];
+  return MetaPhysicL::raw_value(_h[_qp]);
 }
