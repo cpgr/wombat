@@ -48,6 +48,12 @@
     pc_points = '0  15696  31392  47088  62784'
     sw_points = '1.0  0.8  0.6  0.4  0.2'
   []
+  [relperm_uo]
+    type = VERelPermSharpUO
+    S_wr = 0.2
+    krn_max = 1.0
+    krw_max = 1.0
+  []
 []
 
 [Variables]
@@ -180,10 +186,8 @@
     pc_uo = ve_pc_table
   []
   [relperm]
-    type = VERelPermSharp
-    S_wr = 0.2
-    krn_max = 1.0
-    krw_max = 1.0
+    type = VERelPerm
+    relperm_uo = relperm_uo
   []
 []
 

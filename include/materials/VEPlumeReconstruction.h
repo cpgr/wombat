@@ -28,7 +28,7 @@ class PorousFlowCapillaryPressure;
  *
  * S_wr is required in both modes: used directly in the sharp_interface formula
  * and implicit in the capillary_fringe Pc curve (declared here for consistency
- * with downstream materials such as VERelPermSharp).
+ * with downstream materials such as VERelPerm).
  *
  * The result is clamped to [0, H] in both modes to absorb numerical overshoot.
  *

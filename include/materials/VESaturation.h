@@ -12,7 +12,7 @@
  *   ve_saturation[1] = 1 - sat_n    (brine, wetting)
  *
  * The property is declared as ADMaterialProperty so that AD derivatives
- * of sat_n propagate into VEMassTimeDerivative and VERelPermSharp
+ * of sat_n propagate into VEMassTimeDerivative and VERelPerm
  * without any hand-coded chain rule.
  *
  * initQpStatefulProperties() seeds the old-value storage from the initial

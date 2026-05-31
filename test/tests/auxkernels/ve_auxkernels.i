@@ -34,6 +34,12 @@
     porous_flow_vars = 'pp_top sat_n'
     ve_flavour = sharp_interface
   []
+  [relperm_uo]
+    type = VERelPermSharpUO
+    S_wr = 0.2
+    krn_max = 1.0
+    krw_max = 1.0
+  []
 []
 
 [Variables]
@@ -182,10 +188,8 @@
     S_wr = 0.2
   []
   [relperm]
-    type = VERelPermSharp
-    S_wr = 0.2
-    krn_max = 1.0
-    krw_max = 1.0
+    type = VERelPerm
+    relperm_uo = relperm_uo
   []
 []
 
