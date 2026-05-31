@@ -84,6 +84,10 @@
     order = CONSTANT
     family = MONOMIAL
   []
+  [pc_up]
+    order = CONSTANT
+    family = MONOMIAL
+  []
 []
 
 [AuxKernels]
@@ -101,6 +105,12 @@
     mu_n = 1.0e-3
     Q = 1.0e-3
     L = 1000.0
+    execute_on = 'TIMESTEP_END'
+  []
+  [cap_pressure]
+    type = MaterialRealAux
+    variable = pc_up
+    property = ve_pc_up
     execute_on = 'TIMESTEP_END'
   []
 []
@@ -187,6 +197,10 @@
     sat_n = sat_n
     S_wr = 0.2
   []
+  [cap_pressure]
+    type = VEUpscaledCapPressure
+    gravity = '0 0 -9.81'
+  []
   [relperm]
     type = VERelPerm
     relperm_uo = relperm_uo
@@ -219,6 +233,12 @@
   [gamma_avg]
     type = ElementAverageValue
     variable = gamma_ve
+    execute_on = 'TIMESTEP_END'
+  []
+  # Pc^up = (rho_w - rho_n) * g * h = (1000 - 700) * 9.81 * 15 = 44145 Pa
+  [pc_up_avg]
+    type = ElementAverageValue
+    variable = pc_up
     execute_on = 'TIMESTEP_END'
   []
 []
