@@ -14,4 +14,20 @@
                   'co2_volume shall track the analytical front 5e-4*t to within '
                   'a relative error of 1e-5 at every reported timestep.'
   []
+
+  [bl_flat_fv]
+    type = CSVDiff
+    input = 'bl_flat_fv.i'
+    csvdiff = 'bl_flat_fv_csv.csv'
+    cli_args = 'Executioner/end_time=5000'
+    rel_err = 1.0e-5
+    requirement = 'The finite-volume VE kernels (VEFVAdvectiveFlux, '
+                  'VEFVMassTimeDerivative) with a Dirichlet sat_n inlet shall '
+                  'reproduce the analytical Buckley-Leverett mass balance for 1D '
+                  'flow (M=1, flat formation, no gravity): co2_volume shall equal '
+                  'the analytical front 5e-4*t to within a relative error of 1e-5 '
+                  'at every reported timestep, confirming the functor-upwinded '
+                  'relative permeability drives inflow at the fixed-saturation '
+                  'boundary.'
+  []
 []

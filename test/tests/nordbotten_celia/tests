@@ -14,4 +14,18 @@
                   'Mass conservation (co2_integral vs analytical_mass) shall hold '
                   'to within rel_err = 1e-4 at every reported timestep.'
   []
+
+  [nc_sloped_fv]
+    type = CSVDiff
+    input = 'nc_sloped_fv.i'
+    csvdiff = 'nc_sloped_fv_csv.csv'
+    cli_args = 'Executioner/end_time=5e4'
+    rel_err = 1.0e-4
+    abs_zero = 1.0e-6
+    requirement = 'The finite-volume VE kernels (VEFVAdvectiveFlux and '
+                  'VEFVMassTimeDerivative) shall produce updip CO2 migration in a '
+                  'sloped aquifer driven by the rho_c * |g| * grad(z_T) buoyancy term, '
+                  'with cell-by-cell mass conservation (co2_integral vs analytical_mass) '
+                  'to within rel_err = 1e-4 at every reported timestep.'
+  []
 []
