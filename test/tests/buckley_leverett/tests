@@ -31,6 +31,19 @@
                   'boundary.'
   []
 
+  [bl_flat_table]
+    type = CSVDiff
+    input = 'bl_flat_table.i'
+    csvdiff = 'bl_flat_table_csv.csv'
+    cli_args = 'Executioner/end_time=5000'
+    rel_err = 1.0e-5
+    requirement = 'A tabulated relative permeability (VERelPermTableUO) whose table samples '
+                  'the analytical sharp-interface curve (kr_n = sat_n, kr_w = 1 - sat_n) shall '
+                  'reproduce the analytical bl_flat Buckley-Leverett result exactly, verifying '
+                  'that the tabulated UserObject reproduces analytical mode and plugs into the '
+                  'kernels with no other change.'
+  []
+
   [bl_flat_fv_vanleer]
     type = CSVDiff
     input = 'bl_flat_fv.i'
