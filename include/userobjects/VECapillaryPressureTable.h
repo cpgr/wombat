@@ -35,7 +35,7 @@
  * Derivatives
  * -----------
  * First derivatives (dEffectiveSaturation, dCapillaryPressureCurve) are
- * piecewise-constant slopes of the linear segments — exact for the
+ * piecewise-constant slopes of the linear segments -- exact for the
  * interpolant. Second derivatives are zero between breakpoints and undefined
  * at breakpoints; they are returned as 0.0, which is correct for the
  * piecewise-linear interpolant and acceptable for MOOSE's Newton solver in
@@ -59,10 +59,10 @@ public:
   virtual Real d2CapillaryPressureCurve(Real saturation, unsigned qp = 0) const override;
 
 private:
-  /// Pc → Sw interpolation (x = pc_points, y = sw_points).
+  /// Pc -> Sw interpolation (x = pc_points, y = sw_points).
   LinearInterpolation _pc_to_sw;
 
-  /// Sw → Pc interpolation (x = sw_points reversed to be increasing,
+  /// Sw -> Pc interpolation (x = sw_points reversed to be increasing,
   /// y = pc_points reversed correspondingly).
   LinearInterpolation _sw_to_pc;
 };

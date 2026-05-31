@@ -57,7 +57,7 @@ VECapillaryPressureTable::VECapillaryPressureTable(const InputParameters & param
 
   _pc_to_sw.setData(pc, sw);
 
-  // Build the Sw→Pc interpolation with x strictly increasing (reverse both vectors).
+  // Build the Sw->Pc interpolation with x strictly increasing (reverse both vectors).
   std::vector<Real> sw_rev(sw.rbegin(), sw.rend());
   std::vector<Real> pc_rev(pc.rbegin(), pc.rend());
   _sw_to_pc.setData(sw_rev, pc_rev);
