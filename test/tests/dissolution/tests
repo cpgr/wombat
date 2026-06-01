@@ -1,0 +1,54 @@
+[Tests]
+  design = 'VEDissolution.md VEDissolutionSink.md VEDissolvedCO2Aux.md'
+  issues = '#1'
+
+  [constant_rate]
+    type = CSVDiff
+    input = 'constant_rate.i'
+    csvdiff = 'constant_rate_csv.csv'
+    rel_err = 1.0e-8
+    requirement = 'VEDissolution + VEDissolutionSink + VEDissolvedCO2Aux shall dissolve '
+                  'free CO2 at the prescribed constant areal flux and conserve mass: for '
+                  'q0 = 1.4 kg/m^2/s over 100 s with H phi rho_c = 1400, sat_n shall decay '
+                  'linearly to 0.4, the dissolved CO2 mass shall reach q0*t = 140 kg, and '
+                  'the mobile CO2 mass shall fall to 560 kg (mobile + dissolved = initial).'
+  []
+
+  [constant_rate_jacobian]
+    type = PetscJacobianTester
+    input = 'constant_rate.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-4
+    cli_args = 'Materials/dissolution/s_ref=1.0 Executioner/end_time=20 Executioner/dt=20 '
+               '-mat_fd_type ds Outputs/file_base=constant_rate_jac'
+    requirement = 'VEDissolutionSink shall produce a Jacobian consistent with the PETSc '
+                  'finite-difference approximation: with s_ref above the saturation the '
+                  'dissolution gate is in its linear (AD-active) regime, exercising '
+                  'd(rate)/d(sat_n) seeded through the AD ve_dissolution_rate.'
+  []
+
+  [constant_rate_fv]
+    type = CSVDiff
+    input = 'constant_rate_fv.i'
+    csvdiff = 'constant_rate_fv_csv.csv'
+    rel_err = 1.0e-8
+    requirement = 'VEFVDissolutionSink shall dissolve free CO2 at the prescribed constant '
+                  'areal flux in a finite-volume transient solve and conserve mass: with CO2 '
+                  'immobile (krn_max=0) the CO2 mass equation reduces to the same ODE, so '
+                  'sat_n shall decay to 0.4 and the dissolved CO2 mass shall reach q0*t = '
+                  '140 kg (free CO2 lost = H phi rho_c * 0.1 = 140 kg = dissolved).'
+  []
+
+  [constant_rate_fv_jacobian]
+    type = PetscJacobianTester
+    input = 'constant_rate_fv.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-4
+    cli_args = 'Materials/dissolution/s_ref=1.0 Executioner/end_time=20 Executioner/dt=20 '
+               '-mat_fd_type ds Outputs/file_base=constant_rate_fv_jac'
+    requirement = 'VEFVDissolutionSink shall produce a Jacobian consistent with the PETSc '
+                  'finite-difference approximation: with s_ref above the saturation the '
+                  'dissolution gate is AD-active, exercising d(rate)/d(sat_n) through the AD '
+                  've_dissolution_rate in the FV residual.'
+  []
+[]
