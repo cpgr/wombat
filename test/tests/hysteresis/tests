@@ -36,4 +36,17 @@
                   'imbibition branch, confirming the scanning-curve dRelativePermeability '
                   'seeded by the three-argument relativePermeabilityAD.'
   []
+
+  [hysteresis_drainage_fv]
+    type = CSVDiff
+    input = 'hysteresis_drainage_fv.i'
+    csvdiff = 'hysteresis_drainage_fv_csv.csv'
+    rel_err = 1.0e-5
+    requirement = 'VERelPermHysteresisUO driven through the FV functor adapter '
+                  '(VEFVRelPerm with the sat_n_max functor) and VEFVAdvectiveFlux shall '
+                  'reduce exactly to the sharp Buckley-Leverett result under monotonic '
+                  'drainage: co2_volume shall equal the analytical front 5e-4*t to within '
+                  'a relative error of 1e-5, confirming the hysteretic relperm does not '
+                  'perturb drainage and that the FV sat_n_max wiring is correct.'
+  []
 []
