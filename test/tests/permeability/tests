@@ -1,0 +1,17 @@
+[Tests]
+  design = 'VEPermeability.md VEAdvectiveFluxP.md'
+  issues = '#1'
+
+  [anisotropic_permeability]
+    type = CSVDiff
+    input = 'anisotropic_permeability.i'
+    csvdiff = 'anisotropic_permeability_csv.csv'
+    rel_err = 1.0e-8
+    requirement = 'VEPermeability shall assemble the full symmetric K_up tensor including '
+                  'the off-diagonal component, and VEAdvectiveFluxP shall use it in the '
+                  'Darcy operator: for an anisotropic K_up = [[2,0.5],[0.5,1]]*1e-10 the '
+                  'manufactured quadratic p = x^2 - 6xy + y^2 + 10 (a solution of '
+                  'div(K grad p)=0 only because of Kxy) shall be recovered exactly, '
+                  'pp(0.5,0.5) = 9.'
+  []
+[]
