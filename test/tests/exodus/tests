@@ -1,0 +1,26 @@
+[Tests]
+  design = 'VEGeometry.md VEPorosity.md VEPermeability.md'
+  issues = '#1'
+
+  [exodus_fields_generator]
+    type = RunApp
+    input = 'exodus_fields_generator.i'
+    # Writes exodus_fields_generator_out.e with spatially-varying elemental fields
+    # (H, phi_bar, K_up_xx/yy/xy, z_top) read back by exodus_fields.
+    requirement = 'The app shall write a 2D Exodus mesh carrying spatially-varying elemental '
+                  'petrophysical fields, standing in for the Petrel-to-2D upscaling output.'
+  []
+
+  [exodus_fields]
+    type = CSVDiff
+    input = 'exodus_fields.i'
+    csvdiff = 'exodus_fields_csv.csv'
+    prereq = 'exodus_fields_generator'
+    rel_err = 1.0e-8
+    requirement = 'VEGeometry (thickness mode), VEPorosity and VEPermeability shall consume '
+                  'spatially-varying elemental fields read from an Exodus mesh via '
+                  'initial_from_file_var, reproducing the analytic field values at a sample '
+                  'element: ve_H = 102.5, ve_phi_bar = 0.21, and the full anisotropic '
+                  've_K_up = [[1.05e-12, 2.5e-14],[2.5e-14, 5e-13]].'
+  []
+[]
