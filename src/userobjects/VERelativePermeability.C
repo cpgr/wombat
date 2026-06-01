@@ -25,3 +25,16 @@ VERelativePermeability::relativePermeabilityAD(const ADReal & sat_n, unsigned in
   kr.derivatives() = dRelativePermeability(s, phase) * sat_n.derivatives();
   return kr;
 }
+
+ADReal
+VERelativePermeability::relativePermeabilityAD(const ADReal & sat_n,
+                                               Real sat_n_max,
+                                               unsigned int phase) const
+{
+  const Real s = MetaPhysicL::raw_value(sat_n);
+  ADReal kr = relativePermeability(s, sat_n_max, phase);
+  // sat_n_max is frozen (lagged aux), so the only AD path is d(kr)/d(sat_n) along
+  // the scanning curve through the fixed turning point sat_n_max.
+  kr.derivatives() = dRelativePermeability(s, sat_n_max, phase) * sat_n.derivatives();
+  return kr;
+}
