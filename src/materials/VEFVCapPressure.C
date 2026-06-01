@@ -7,10 +7,12 @@ VEFVCapPressure::validParams()
 {
   InputParameters params = FunctorMaterial::validParams();
   params.addClassDescription(
-      "FV functor ve_pc_up for the upscaled capillary pressure, evaluated at any "
-      "face argument so VEFVAdvectiveFlux can compute grad(Pc^up).n via the MOOSE "
-      "FV gradient reconstruction. Sharp-interface formula: "
+      "FV functors for the upscaled capillary pressure. Sharp-interface formula: "
       "Pc^up = delta_rho * |g| * sat_n * (z_top - z_bottom) / (1 - S_wr) + pc_entry. "
+      "Declares ve_pc_up (diagnostic), and the two chain-rule coefficients "
+      "ve_dPcup_dsatn = delta_rho*|g|*H/(1-S_wr) and ve_dPcup_dH = "
+      "delta_rho*|g|*sat_n/(1-S_wr) that VEFVAdvectiveFlux multiplies by "
+      "grad(sat_n).n and grad(H).n to assemble grad(Pc^up).n. "
       "FE counterpart: VEUpscaledCapPressure.");
 
   params.addRequiredParam<MooseFunctorName>(
@@ -72,4 +74,15 @@ VEFVCapPressure::VEFVCapPressure(const InputParameters & parameters)
         const ADReal H = _z_top(r, t) - _z_bottom(r, t);
         return _delta_rho * _gravity_magnitude * H / (1.0 - _S_wr);
       });
+
+  // ve_dPcup_dH = d(Pc^up)/d(H) = delta_rho * |g| * sat_n / (1 - S_wr). The
+  // second half of the chain rule grad(Pc^up).n = ve_dPcup_dsatn*grad(sat_n).n
+  // + ve_dPcup_dH*grad(H).n for laterally varying thickness. VEFVAdvectiveFlux
+  // multiplies its face VALUE by grad(H).n formed from the z_top/z_bottom functor
+  // gradients (fixed geometry, BC-safe), so a Dirichlet sat_n inlet still enters
+  // through the boundary-aware sat_n VALUE here. Mirrors FE ve_dPcup_dH.
+  addFunctorProperty<ADReal>(
+      "ve_dPcup_dH",
+      [this](const auto & r, const auto & t) -> ADReal
+      { return _delta_rho * _gravity_magnitude * _sat_n(r, t) / (1.0 - _S_wr); });
 }

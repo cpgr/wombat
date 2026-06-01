@@ -9,11 +9,14 @@
  *
  *   ve_H          -- formation thickness [m]
  *   ve_grad_z_top -- 2-D horizontal gradient of the top-surface elevation [m/m]
+ *   ve_grad_H     -- 2-D horizontal gradient of the formation thickness [m/m]
  *
  * ve_grad_z_top enters every VEAdvectiveFlux kernel as the buoyancy drive
- * rho_c * g * grad(z_T).  Both properties are plain Real (not AD) because
- * formation geometry is fixed and carries no Jacobian with respect to the
- * primary flow variables.
+ * rho_c * g * grad(z_T).  ve_grad_H supplies the sat_n * grad(H) chain-rule
+ * part of grad(Pc^up) for the capillary-diffusion term (consumed by
+ * VEAdvectiveFluxS when capillary=true).  All three properties are plain Real
+ * (not AD) because formation geometry is fixed and carries no Jacobian with
+ * respect to the primary flow variables.
  *
  * Two input modes are supported; exactly one must be chosen:
  *
@@ -35,7 +38,11 @@
  * which interpolates the nodal z_top AuxVariable to quadrature points using
  * the same LAGRANGE shape functions.  z_top must therefore be declared as a
  * LAGRANGE FIRST ORDER AuxVariable; CONSTANT MONOMIAL would produce a zero
- * gradient and silently kill the entire buoyancy drive.
+ * gradient and silently kill the entire buoyancy drive.  ve_grad_H is formed
+ * the same way (grad(H) in thickness mode, grad(z_T) - grad(z_B) in top_bottom
+ * mode), so z_bottom / H must likewise be LAGRANGE FIRST ORDER for a non-zero
+ * grad(H); a zero grad(H) silently drops the topography part of the capillary
+ * drive but leaves the constant-thickness physics exact.
  */
 class VEGeometry : public Material
 {
@@ -54,12 +61,15 @@ protected:
   const VariableGradient & _grad_z_top_var;
 
   // --- Inputs required in top_bottom mode ---
-  const VariableValue * const _z_bottom; ///< nullptr in thickness mode
+  const VariableValue * const    _z_bottom;          ///< nullptr in thickness mode
+  const VariableGradient * const _grad_z_bottom_var; ///< nullptr in thickness mode
 
   // --- Inputs required in thickness mode ---
-  const VariableValue * const _H_var; ///< nullptr in top_bottom mode
+  const VariableValue * const    _H_var;      ///< nullptr in top_bottom mode
+  const VariableGradient * const _grad_H_var; ///< nullptr in top_bottom mode
 
   // --- Outputs ---
   MaterialProperty<Real> &         _H;
   MaterialProperty<RealGradient> & _grad_z_top;
+  MaterialProperty<RealGradient> & _grad_H;
 };

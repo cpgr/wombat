@@ -41,9 +41,11 @@ VEFVAdvectiveFlux::validParams()
       "capillary",
       false,
       "If true, adds grad(Pc^up).n to the CO2 (fluid_phase=0) Darcy potential "
-      "gradient as ve_dPcup_dsatn(face) * grad(sat_n).n. Has no effect on the brine "
-      "equation. Requires VEFVCapPressure in [FunctorMaterials] (declares the "
-      "ve_dPcup_dsatn functor). Default OFF so existing inputs are unchanged.");
+      "gradient as ve_dPcup_dsatn(face)*grad(sat_n).n + ve_dPcup_dH(face)*grad(H).n. "
+      "Has no effect on the brine equation. Requires VEFVCapPressure in "
+      "[FunctorMaterials] (declares ve_dPcup_dsatn, ve_dPcup_dH). The grad(H).n term "
+      "vanishes for constant thickness, so flat/constant-H golds are unchanged. "
+      "Default OFF so existing inputs are unchanged.");
 
   // Two ghost layers so functor gradient reconstruction and upwind face
   // evaluation are available across the face, including in parallel.
@@ -68,6 +70,8 @@ VEFVAdvectiveFlux::VEFVAdvectiveFlux(const InputParameters & parameters)
         getParam<unsigned int>("fluid_phase") == 0 ? "ve_relperm_n" : "ve_relperm_w")),
     _dPcup_dsatn(_capillary && _fluid_phase == 0 ? &getFunctor<ADReal>("ve_dPcup_dsatn")
                                                  : nullptr),
+    _dPcup_dH(_capillary && _fluid_phase == 0 ? &getFunctor<ADReal>("ve_dPcup_dH")
+                                              : nullptr),
     _K_up(getMaterialProperty<RealTensorValue>("ve_K_up")),
     _density(getADMaterialProperty<std::vector<Real>>("ve_density")),
     _viscosity(getADMaterialProperty<std::vector<Real>>("ve_viscosity"))
@@ -98,11 +102,17 @@ VEFVAdvectiveFlux::computeQpResidual()
   const ADReal mu_c = _viscosity[_qp][_fluid_phase];
   ADReal dphi_dn = grad_pp_n + rho_c * _gravity_magnitude * grad_zt_n;
   if (_capillary && _fluid_phase == 0)
-    // grad(Pc^up).n = d(Pc^up)/d(sat_n) * grad(sat_n).n. gradUDotNormal() is the
-    // sat_n variable's boundary-aware face-normal gradient (the FVDiffusion idiom),
-    // so a Dirichlet sat_n inlet drives capillary imbibition. The coefficient is a
-    // material-functor VALUE (no material-functor gradient is taken).
-    dphi_dn += (*_dPcup_dsatn)(face, state) * gradUDotNormal(state, false);
+  {
+    // grad(Pc^up).n = d(Pc^up)/d(sat_n)*grad(sat_n).n + d(Pc^up)/d(H)*grad(H).n.
+    // gradUDotNormal() is the sat_n variable's boundary-aware face-normal gradient
+    // (the FVDiffusion idiom), so a Dirichlet sat_n inlet drives capillary
+    // imbibition. The coefficients are material-functor VALUEs (no material-functor
+    // gradient is taken). grad(H).n uses the z_top/z_bottom functor gradients --
+    // fixed geometry, so taking their Green-Gauss gradient is safe (unlike sat_n).
+    const ADReal grad_H_n = grad_zt_n - _z_bottom.gradient(face, state) * _normal;
+    dphi_dn += (*_dPcup_dsatn)(face, state) * gradUDotNormal(state, false) +
+               (*_dPcup_dH)(face, state) * grad_H_n;
+  }
   const ADReal darcy_velocity_n = -K_nn * dphi_dn;
 
   // --- Upwind relperm via the functor at the upwind face ---

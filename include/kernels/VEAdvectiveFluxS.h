@@ -31,10 +31,18 @@ protected:
   /// AD gradient of pp_top -- carries off-diagonal Jacobian entries wrt pressure.
   const ADVariableGradient & _grad_pp_top;
 
-  /// If true, adds d(Pc^up)/d(sat_n) * grad(sat_n) to the CO2 Darcy potential.
-  /// Requires VEUpscaledCapPressure to be present (declares ve_dPcup_dsatn).
+  /// If true, adds grad(Pc^up) = d(Pc^up)/d(sat_n)*grad(sat_n) +
+  /// d(Pc^up)/d(H)*grad(H) to the CO2 Darcy potential. Requires
+  /// VEUpscaledCapPressure (ve_dPcup_dsatn, ve_dPcup_dH) and VEGeometry (ve_grad_H).
   const bool _capillary;
 
   /// d(Pc^up)/d(sat_n) [Pa] from VEUpscaledCapPressure; null when capillary=false.
   const MaterialProperty<Real> * const _dPcup_dsatn;
+
+  /// d(Pc^up)/d(H) [Pa/m] from VEUpscaledCapPressure; null when capillary=false.
+  /// AD so the grad(H) term's sat_n Jacobian is captured (grad(H) is fixed geometry).
+  const ADMaterialProperty<Real> * const _dPcup_dH;
+
+  /// grad(H) [m/m] from VEGeometry (ve_grad_H); null when capillary=false.
+  const MaterialProperty<RealGradient> * const _grad_H;
 };
