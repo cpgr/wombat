@@ -1,0 +1,79 @@
+[Tests]
+  design = 'VEAdvectiveFluxS.md VEFVAdvectiveFlux.md VEUpscaledCapPressure.md VEFVCapPressure.md VEGeometry.md'
+  issues = '#1'
+
+  # Verification of the sat_n * grad(H) chain-rule part of the capillary drive
+  # grad(Pc^up) = d(Pc^up)/d(sat_n)*grad(sat_n) + d(Pc^up)/d(H)*grad(H) on a
+  # laterally varying thickness. The buoyancy drive is killed (flat top), so the
+  # only driver is capillary. The IC is the no-flow equilibrium sat_n*H = const,
+  # which is a fixed point ONLY when the grad(H) term is present; without it the
+  # kernel drives sat_n toward uniform and the L2 drift balloons. This pins the
+  # SIGN and MAGNITUDE of the grad(H) term (the Jacobian tests below cannot).
+
+  [cap_equilibrium_fe]
+    type = CSVDiff
+    input = 'cap_equilibrium_fe.i'
+    csvdiff = 'cap_equilibrium_fe_csv.csv'
+    abs_zero = 1.0e-3
+    requirement = 'VEAdvectiveFluxS with capillary=true shall hold the no-flow '
+                  'capillary equilibrium sat_n*H = const on a laterally varying '
+                  'thickness: the L2 drift of sat_n from the analytic equilibrium '
+                  'profile shall stay below 1e-3, verifying the sign and magnitude '
+                  'of the d(Pc^up)/d(H)*grad(H) chain-rule term.'
+  []
+
+  [cap_equilibrium_fv]
+    type = CSVDiff
+    input = 'cap_equilibrium_fv.i'
+    csvdiff = 'cap_equilibrium_fv_csv.csv'
+    abs_zero = 1.0e-3
+    requirement = 'VEFVAdvectiveFlux with capillary=true and VEFVCapPressure shall '
+                  'hold the no-flow capillary equilibrium sat_n*H = const on a '
+                  'laterally varying thickness: the L2 drift of sat_n from the '
+                  'analytic equilibrium profile shall stay below 1e-3, verifying '
+                  'the ve_dPcup_dH*grad(H).n term.'
+  []
+
+  # AD-vs-FD Jacobian consistency of the capillary term WITH grad(H) active. The
+  # equilibrium IC is non-uniform and strictly interior (sat_n in [0.2, 0.6]), so
+  # both grad(sat_n) and grad(H) capillary contributions populate the Jacobian and
+  # the relperm is away from the clamp kink (no spurious AD-vs-FD mismatch).
+  #
+  # FV ONLY: at the no-flow fixed point the Darcy velocity is ~0 at every face,
+  # which sits exactly on the upwind-direction switch (raw_value(velocity) > 0)
+  # that selects which cell supplies the advected relperm. An FD perturbation can
+  # flip that branch -- a finite jump in the relperm source -- which AD does not
+  # (and should not) track, giving a spurious ~1e-5 ||J-Jfd|| unrelated to the
+  # capillary term. (The FE Jacobian has no upwind switch, so it is clean at the
+  # same zero-velocity state -- see cap_equilibrium_fe_jacobian.) The FV Jacobian
+  # test therefore uses advected_interp_method=average (central, no upwind branch,
+  # fully differentiable); the grad(H) capillary term is still active and tested.
+
+  [cap_equilibrium_fe_jacobian]
+    type = PetscJacobianTester
+    input = 'cap_equilibrium_fe.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-4
+    cli_args = 'Executioner/end_time=2000 Executioner/dt=2000 -mat_fd_type ds '
+               'Outputs/file_base=cap_equilibrium_fe_jac'
+    requirement = 'VEAdvectiveFluxS with capillary=true on a varying-thickness mesh '
+                  'shall produce a Jacobian consistent with the PETSc finite-'
+                  'difference approximation to within ratio tolerance 1e-7, '
+                  'confirming the AD derivative of the d(Pc^up)/d(H)*grad(H) term.'
+  []
+
+  [cap_equilibrium_fv_jacobian]
+    type = PetscJacobianTester
+    input = 'cap_equilibrium_fv.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-4
+    cli_args = 'Executioner/end_time=2000 Executioner/dt=2000 -mat_fd_type ds '
+               'FVKernels/co2_flux/advected_interp_method=average '
+               'FVKernels/brine_flux/advected_interp_method=average '
+               'Outputs/file_base=cap_equilibrium_fv_jac'
+    requirement = 'VEFVAdvectiveFlux with capillary=true and VEFVCapPressure on a '
+                  'varying-thickness mesh shall produce a Jacobian consistent with '
+                  'the PETSc finite-difference approximation to within ratio '
+                  'tolerance 1e-7, confirming the ve_dPcup_dH*grad(H).n term.'
+  []
+[]
