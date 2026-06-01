@@ -9,8 +9,10 @@ VESaturationMaxAux::validParams()
   params.addClassDescription(
       "Stateful aux tracking sat_n_max = max(sat_n, sat_n_max_old), the turning point "
       "of the imbibition scanning curve for hysteretic residual trapping. Advanced once "
-      "per step (lagged/explicit); requires an IC equal to the sat_n IC and the same "
-      "variable family as sat_n.");
+      "per step (lagged/explicit). The sat_n_max variable MUST be given an "
+      "initial_condition equal to the initial sat_n (so sat_n_max >= sat_n from t=0); "
+      "otherwise it starts at 0, the drainage branch is selected, and no CO2 is trapped. "
+      "Use the same variable family as sat_n.");
 
   params.addRequiredCoupledVar("sat_n",
                                "Depth-averaged CO2 saturation (the primary variable).");

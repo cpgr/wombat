@@ -72,15 +72,18 @@ VERelPermHysteresisUO::relativePermeability(Real sat_n, Real sat_n_max, unsigned
   if (phase == 1)
     return _krw_max * (1.0 - effSat(sat_n));
 
-  // CO2 (non-wetting): drainage while at/above the historical max, else imbibition.
-  if (sat_n >= sat_n_max)
-    return _krn_max * effSat(sat_n);
-
-  const Real s = effSat(sat_n);
+  // CO2 (non-wetting): drainage while at/above the historical max, OR when there is
+  // no meaningful drainage history (smax ~ 0, e.g. sat_n_max still at its zero IC and
+  // a Newton iterate dipping sat_n below it). The denom guard avoids the 0/0 that
+  // arises as smax - sgr = C*smax^2/(1+C*smax) -> 0.
   const Real smax = effSat(sat_n_max);
-  const Real sgr = smax / (1.0 + _C * smax);
-  // smax - sgr = C*smax^2/(1+C*smax) > 0 for smax > 0 (guaranteed: sat_n_max > sat_n >= 0).
-  const Real mobile = smax * (s - sgr) / (smax - sgr);
+  const Real s = effSat(sat_n);
+  const Real sgr = (smax > 0.0) ? smax / (1.0 + _C * smax) : 0.0;
+  const Real denom = smax - sgr;
+  if (sat_n >= sat_n_max || denom <= 1.0e-12)
+    return _krn_max * s; // drainage curve
+
+  const Real mobile = smax * (s - sgr) / denom;
   return _krn_max * std::max(0.0, mobile);
 }
 
@@ -94,31 +97,33 @@ VERelPermHysteresisUO::dRelativePermeability(Real sat_n, Real sat_n_max, unsigne
     return -_krw_max * ds;
   }
 
-  if (sat_n >= sat_n_max)
-    return dRelativePermeability(sat_n, 0);
-
-  const Real s = effSat(sat_n);
   const Real smax = effSat(sat_n_max);
-  const Real sgr = smax / (1.0 + _C * smax);
+  const Real s = effSat(sat_n);
+  const Real sgr = (smax > 0.0) ? smax / (1.0 + _C * smax) : 0.0;
+  const Real denom = smax - sgr;
+  if (sat_n >= sat_n_max || denom <= 1.0e-12)
+    return dRelativePermeability(sat_n, 0); // drainage derivative
+
   // Nonzero only on the active part of the scanning line, s in (sgr, smax), and
   // inside the saturation clamp. sat_n_max is frozen so smax, sgr carry no derivative.
   if (s > sgr && s < smax)
-    return _krn_max * smax / (smax - sgr) / (1.0 - _S_wr);
+    return _krn_max * smax / denom / (1.0 - _S_wr);
   return 0.0;
 }
 
 Real
 VERelPermHysteresisUO::trappedSaturation(Real sat_n, Real sat_n_max) const
 {
-  if (sat_n >= sat_n_max)
-    return 0.0; // drainage: all CO2 connected
+  const Real smax = effSat(sat_n_max);
+  const Real sgr = (smax > 0.0) ? smax / (1.0 + _C * smax) : 0.0;
+  const Real denom = smax - sgr;
+  if (sat_n >= sat_n_max || denom <= 1.0e-12)
+    return 0.0; // drainage / no history: all CO2 connected
 
   const Real s = effSat(sat_n);
-  const Real smax = effSat(sat_n_max);
-  const Real sgr = smax / (1.0 + _C * smax);
   // Defined so that sat_n - sat_n_trap equals the kr-implied mobile saturation:
   // 0 at the turning point (s = smax), growing to the Land residual (1-S_wr)*sgr at
   // s = sgr. Clamped to [0, sat_n] for safety against round-off / overshoot.
-  const Real trapped = (1.0 - _S_wr) * sgr * (smax - s) / (smax - sgr);
+  const Real trapped = (1.0 - _S_wr) * sgr * (smax - s) / denom;
   return std::max(0.0, std::min(trapped, sat_n));
 }
