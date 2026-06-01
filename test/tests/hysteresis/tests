@@ -1,5 +1,6 @@
 [Tests]
-  design = 'VESaturationMaxAux.md VERelativePermeability.md'
+  design = 'VESaturationMaxAux.md VERelativePermeability.md VERelPermHysteresisUO.md '
+           'VETrappedSaturationAux.md'
   issues = '#1'
 
   [sat_n_max_tracking]
@@ -10,5 +11,29 @@
                   'sat_n_max shall rise with sat_n during drainage and stay pinned at '
                   'the historical peak as sat_n recedes during imbibition, providing '
                   'the turning point for the hysteretic relative permeability.'
+  []
+
+  [column_cycle]
+    type = CSVDiff
+    input = 'column_cycle.i'
+    csvdiff = 'column_cycle_csv.csv'
+    requirement = 'VERelPermHysteresisUO and VETrappedSaturationAux shall reproduce the '
+                  'closed-form Land residual-trapping saturation over a drainage -> '
+                  'imbibition cycle: sat_n_trap shall be zero on drainage, zero at the '
+                  'turning point, and grow to the Land residual s_gr (mobile CO2 -> 0) '
+                  'as sat_n recedes to s_gr.'
+  []
+
+  [hysteresis_jacobian]
+    type = PetscJacobianTester
+    input = 'hysteresis_jacobian.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-4
+    cli_args = '-mat_fd_type ds'
+    requirement = 'The hysteretic relperm path (VERelPermHysteresisUO -> VERelPerm -> '
+                  'VEAdvectiveFluxS) shall produce a Jacobian consistent with the PETSc '
+                  'finite-difference approximation to within ratio tolerance 1e-7 on the '
+                  'imbibition branch, confirming the scanning-curve dRelativePermeability '
+                  'seeded by the three-argument relativePermeabilityAD.'
   []
 []
