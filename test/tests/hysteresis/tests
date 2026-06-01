@@ -1,0 +1,14 @@
+[Tests]
+  design = 'VESaturationMaxAux.md VERelativePermeability.md'
+  issues = '#1'
+
+  [sat_n_max_tracking]
+    type = CSVDiff
+    input = 'sat_n_max_tracking.i'
+    csvdiff = 'sat_n_max_tracking_csv.csv'
+    requirement = 'VESaturationMaxAux shall track the running maximum of sat_n: '
+                  'sat_n_max shall rise with sat_n during drainage and stay pinned at '
+                  'the historical peak as sat_n recedes during imbibition, providing '
+                  'the turning point for the hysteretic relative permeability.'
+  []
+[]
