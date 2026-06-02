@@ -27,4 +27,33 @@
                   'central-difference face evaluation of the VEFVFluidProperties density and '
                   'viscosity functors.'
   []
+
+  [eos_interface_fe_jacobian]
+    type = PetscJacobianTester
+    input = 'eos_interface_fe_jacobian.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-2
+    cli_args = '-mat_fd_type ds'
+    requirement = 'VEFluidProperties with eos_reference_depth=interface shall evaluate the EOS '
+                  'at the CO2-brine contact z_T + h and produce a Jacobian consistent with the '
+                  'PETSc finite-difference approximation, confirming that the density and '
+                  'viscosity derivatives wrt both pp_top and sat_n (the latter entering through '
+                  'the sharp-interface thickness h) are seeded correctly into the storage and '
+                  'flux kernels.'
+  []
+
+  [eos_interface_fv_jacobian]
+    type = PetscJacobianTester
+    input = 'eos_interface_fv_jacobian.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-2
+    cli_args = '-mat_fd_type ds'
+    requirement = 'A fully consistent FV interface-mode model, with both VEFVFluidProperties '
+                  '(flux) and VEFluidProperties (storage) evaluating density/viscosity at the '
+                  'z_T + h interface pressure with H built from the coupled FV z_top/z_bottom, '
+                  'shall produce a Jacobian consistent with the PETSc finite-difference '
+                  'approximation, confirming that the derivative wrt sat_n (through h) is seeded '
+                  'correctly through both the central-difference face evaluation in '
+                  'VEFVAdvectiveFlux and the heavily-weighted FV mass-storage term.'
+  []
 []
