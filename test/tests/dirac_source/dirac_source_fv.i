@@ -11,7 +11,7 @@
 #
 # FV upwinding is monotone, so unlike the FE version this carries the sharp plume
 # without ringing. Geometry is set as FV variables by FunctionIC (live before the first
-# Jacobian -- the FV idiom; see test/tests/cross_code or nc_sloped_fv).
+# Jacobian -- the FV idiom; see nordbotten_celia/nc_sloped_fv).
 
 [Mesh]
   type = GeneratedMesh
