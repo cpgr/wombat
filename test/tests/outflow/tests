@@ -1,0 +1,19 @@
+[Tests]
+  design = 'VEFVAdvectiveOutflowBC.md'
+  issues = '#1'
+
+  [outflow]
+    type = CSVDiff
+    input = 'outflow.i'
+    csvdiff = 'outflow_csv.csv'
+    # GOLD: generate once (run outflow.i; confirm sat_n and co2_integral decrease
+    # monotonically from 0.5 and 1.0 as the boundary cell drains -- a no-flow BC would
+    # hold both fixed), then copy outflow_out/outflow_csv.csv into gold/. The drain rate
+    # is mildly timestep-sensitive, so regenerate the gold if the Executioner dt changes.
+    requirement = 'The VEFVAdvectiveOutflowBC shall let a fluid phase leave the domain '
+                  'at the Darcy rate carrying the interior relative permeability, so an '
+                  'isolated CO2 cell at the updip boundary drains monotonically (sat_n '
+                  'and co2_integral decrease) rather than accumulating against a '
+                  'no-flow wall.'
+  []
+[]
