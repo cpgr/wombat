@@ -13,4 +13,18 @@
                   'wrapping the three-variable BrineFluidProperties at a constant salt mass '
                   'fraction.'
   []
+
+  [fv_eos_jacobian]
+    type = PetscJacobianTester
+    input = 'fv_eos_jacobian.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-2
+    cli_args = '-mat_fd_type ds'
+    requirement = 'The FV advective flux with a pressure-dependent EOS (CO2FluidProperties '
+                  'non-wetting, SimpleBrineFluidProperties wetting) shall produce a Jacobian '
+                  'consistent with the PETSc finite-difference approximation, confirming that '
+                  'd(rho)/d(pp_top) and d(mu)/d(pp_top) are seeded correctly through the '
+                  'central-difference face evaluation of the VEFVFluidProperties density and '
+                  'viscosity functors.'
+  []
 []

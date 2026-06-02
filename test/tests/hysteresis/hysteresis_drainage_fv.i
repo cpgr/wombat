@@ -197,6 +197,12 @@
     sat_n = sat_n
     sat_n_max = sat_n_max
   []
+  [fv_fluid_props]
+    type = VEFVFluidProperties
+    fp_nw = co2_fp
+    fp_w = brine_fp
+    pp_top = pp_top
+  []
 []
 
 [Preconditioning]

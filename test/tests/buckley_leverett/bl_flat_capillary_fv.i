@@ -181,6 +181,12 @@
     delta_rho = 300.0
     gravity = '0 0 -9.81'
   []
+  [fv_fluid_props]
+    type = VEFVFluidProperties
+    fp_nw = co2_fp
+    fp_w = brine_fp
+    pp_top = pp_top
+  []
 []
 
 [Preconditioning]

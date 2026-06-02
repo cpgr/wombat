@@ -1,22 +1,24 @@
-# Capillary no-flow equilibrium on a laterally varying thickness -- FV
+# Jacobian verification of the FV advective flux with a pressure-dependent EOS.
 #
-# FV counterpart of cap_equilibrium_fe.i. See that file for the full rationale.
-# VEFVCapPressure declares ve_dPcup_dsatn and ve_dPcup_dH; VEFVAdvectiveFlux with
-# capillary=true assembles grad(Pc^up).n = ve_dPcup_dsatn*grad(sat_n).n +
-# ve_dPcup_dH*grad(H).n, where grad(H).n comes from the z_top/z_bottom functor
-# gradients.
+# This is the variable-density companion to the constant-property FV tests: it
+# exercises the face-correct density path that those tests cannot, because for
+# constant fluid properties the face average of density reduces to a constant and
+# the rework is a no-op. Here the non-wetting phase is real CO2 (CO2FluidProperties)
+# and the wetting phase a fixed-salinity brine (SimpleBrineFluidProperties), so both
+# densities and viscosities vary with pressure across every face. A pressure gradient
+# and a sloped top surface make the mass-flux coefficient AND the buoyancy term
+# density-dependent.
 #
-#   flat top z_T = 0, H(x) = 10 + 0.2 x  (grad(z_T) = 0, grad(H) = 0.2)
-#   equilibrium sat_n_eq(x) = 6 / H(x) in [0.2, 0.6]  ->  sat_n*H = const
-#   grad(Pc^up) = delta_rho*g*grad(sat_n*H) = 0  ->  no-flow fixed point.
-#
-# satn_drift (ElementL2Error vs sat_n_eq) stays ~O(1e-4) WITH the grad(H) term
-# and grows to O(1e-2)+ without it.
+# VEFVFluidProperties publishes density/viscosity as functors; VEFVAdvectiveFlux
+# evaluates them at the central-difference (face-averaged) argument, which carries AD
+# wrt pp_top on both sides of the face. PetscJacobianTester confirms the hand-assembled
+# AD Jacobian matches the finite-difference reference -- i.e. d(rho)/d(pp_top) and
+# d(mu)/d(pp_top) are seeded correctly through the face evaluation.
 
 [Mesh]
   type = GeneratedMesh
   dim = 1
-  nx = 100
+  nx = 5
   xmin = 0
   xmax = 100
 []
@@ -27,14 +29,11 @@
 
 [FluidProperties]
   [co2_fp]
-    type = ConstantFluidProperties
-    density = 700.0
-    viscosity = 1.0e-3
+    type = CO2FluidProperties
   []
   [brine_fp]
-    type = ConstantFluidProperties
-    density = 1000.0
-    viscosity = 1.0e-3
+    type = SimpleBrineFluidProperties
+    salt_mass_fraction = 0.1
   []
 []
 
@@ -46,9 +45,24 @@
   []
   [relperm_uo]
     type = VERelPermSharpUO
-    S_wr = 0.0
+    S_wr = 0.1
     krn_max = 1.0
     krw_max = 1.0
+  []
+[]
+
+[Functions]
+  [z_top_func]
+    type = ParsedFunction
+    expression = '100.0 - 0.1 * x' # sloped top -> nonzero grad(z_T) buoyancy drive
+  []
+  [z_bottom_func]
+    type = ParsedFunction
+    expression = '80.0 - 0.1 * x'
+  []
+  [pp_top_func]
+    type = ParsedFunction
+    expression = '12.0e6 - 4.0e4 * x' # 12 MPa -> 8 MPa: supercritical CO2, rho varies
   []
 []
 
@@ -61,39 +75,32 @@
   []
 []
 
-[Functions]
-  [z_bottom_fn]
-    type = ParsedFunction
-    expression = '-(10.0 + 0.2 * x)'
-  []
-  [sat_n_eq]
-    type = ParsedFunction
-    expression = '6.0 / (10.0 + 0.2 * x)'
-  []
-[]
-
 [ICs]
   [pp_top_ic]
-    type = ConstantIC
+    type = FunctionIC
     variable = pp_top
-    value = 1.0e5
+    function = pp_top_func
   []
   [sat_n_ic]
-    type = FunctionIC
+    type = ConstantIC
     variable = sat_n
-    function = sat_n_eq
+    value = 0.5 # off the sharp-relperm kink, so CO2 mobility and its derivative are live
+  []
+  [z_top_ic]
+    type = FunctionIC
+    variable = z_top
+    function = z_top_func
   []
   [z_bottom_ic]
     type = FunctionIC
     variable = z_bottom
-    function = z_bottom_fn
+    function = z_bottom_func
   []
 []
 
 [AuxVariables]
   [z_top]
     type = MooseVariableFVReal
-    initial_condition = 0.0
   []
   [z_bottom]
     type = MooseVariableFVReal
@@ -115,7 +122,6 @@
     pp_top = pp_top
     z_top = z_top
     z_bottom = z_bottom
-    capillary = true
   []
   [brine_storage]
     type = VEFVMassTimeDerivative
@@ -135,12 +141,17 @@
 []
 
 [FVBCs]
-  # Single pressure pin removes the closed-domain pressure null space.
-  [pp_pin]
-    type = FVDirichletBC
+  [pp_left]
+    type = FVFunctionDirichletBC
     variable = pp_top
     boundary = left
-    value = 1.0e5
+    function = pp_top_func
+  []
+  [pp_right]
+    type = FVFunctionDirichletBC
+    variable = pp_top
+    boundary = right
+    function = pp_top_func
   []
 []
 
@@ -151,14 +162,15 @@
   []
   [permeability]
     type = VEPermeability
-    K_up_xx = 1.0e-10
-    K_up_yy = 1.0e-10
+    K_up_xx = 1.0e-12
+    K_up_yy = 1.0e-12
   []
   [fluid_props]
     type = VEFluidProperties
     fp_nw = co2_fp
     fp_w = brine_fp
     pp_top = pp_top
+    temperature = 323.15
   []
   [saturation]
     type = VESaturation
@@ -172,20 +184,12 @@
     relperm_uo = relperm_uo
     sat_n = sat_n
   []
-  [cap_pressure]
-    type = VEFVCapPressure
-    sat_n = sat_n
-    z_top = z_top
-    z_bottom = z_bottom
-    S_wr = 0.0
-    delta_rho = 300.0
-    gravity = '0 0 -9.81'
-  []
   [fv_fluid_props]
     type = VEFVFluidProperties
     fp_nw = co2_fp
     fp_w = brine_fp
     pp_top = pp_top
+    temperature = 323.15
   []
 []
 
@@ -198,34 +202,9 @@
 
 [Executioner]
   type = Transient
-  end_time = 2.0e4
-  dt = 2.0e3
-
+  end_time = 1.0
+  dt = 1.0
   solve_type = NEWTON
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu NONZERO'
-
-  automatic_scaling = true
-
-  nl_rel_tol = 1.0e-8
-  nl_abs_tol = 1.0e-10
-  nl_max_its = 20
-  l_tol = 1.0e-8
-[]
-
-[Postprocessors]
-  [satn_drift]
-    type = ElementL2Error
-    variable = sat_n
-    function = sat_n_eq
-    execute_on = 'FINAL'
-  []
-[]
-
-[Outputs]
-  exodus = true
-  [csv]
-    type = CSV
-    execute_on = 'FINAL'
-  []
 []

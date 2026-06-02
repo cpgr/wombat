@@ -22,6 +22,7 @@
  *   grad(z_T).n = z_top.gradient(face) . n
  *   grad(pp).n  = pp_top.gradient(face) . n            (carries AD wrt pp_top)
  *   kr_c        = ve_relperm_{n,w}( makeFace(upwind) )  (carries AD wrt sat_n)
+ *   rho_c, mu_c = ve_{density,viscosity}_{n,w}(face)   (face avg; AD wrt pp_top)
  *
  * The relative permeability is the advected (upwinded) quantity: it is evaluated
  * at the UPWIND face via makeFace, so on an inflow boundary it picks up the
@@ -30,10 +31,16 @@
  * face quantities come from functors, the kernel never indexes a neighbor
  * material/array and is therefore safe on boundary faces (no neighbor element).
  *
- * rho_c, mu_c and K are taken elem-side; they are constant when VEFluidProperties
- * is driven by ConstantFluidProperties (and K via VEPermeability) so this is exact.
- * (Revisit upwinding of rho_c and harmonic K averaging when a
- * pressure/temperature-dependent EOS / heterogeneous K are introduced.)
+ * rho_c and mu_c are evaluated through functors (ve_density_{n,w} /
+ * ve_viscosity_{n,w} from VEFVFluidProperties) at a CENTRAL-DIFFERENCE
+ * (face-averaged) argument, so for a pressure/temperature-dependent EOS they are
+ * face-correct: they use both adjacent cell pressures and carry AD wrt pp_top on
+ * both sides. A face average (rather than upwinding rho_c) keeps the smooth
+ * density out of the monotone-limited advection and avoids the circular dependence
+ * between the upwind direction and the buoyancy term. For constant fluid properties
+ * the face average reduces to that constant, so this is exact and changes nothing.
+ * (K is still taken elem-side; revisit harmonic K averaging when heterogeneous K is
+ * introduced.)
  */
 class VEFVAdvectiveFlux : public FVFluxKernel
 {
@@ -61,6 +68,10 @@ protected:
   const Moose::Functor<ADReal> & _z_top;
   const Moose::Functor<ADReal> & _z_bottom;
   const Moose::Functor<ADReal> & _relperm; ///< ve_relperm_n (phase 0) or ve_relperm_w (phase 1)
+  /// ve_density_n (phase 0) or ve_density_w (phase 1), evaluated face-averaged.
+  const Moose::Functor<ADReal> & _density;
+  /// ve_viscosity_n (phase 0) or ve_viscosity_w (phase 1), evaluated face-averaged.
+  const Moose::Functor<ADReal> & _viscosity;
   /// d(Pc^up)/d(sat_n) coefficient functor (from VEFVCapPressure); null when
   /// capillary=false. Multiplied by grad(sat_n).n to form grad(Pc^up).n.
   const Moose::Functor<ADReal> * const _dPcup_dsatn;
@@ -69,8 +80,6 @@ protected:
   /// grad(Pc^up).n.
   const Moose::Functor<ADReal> * const _dPcup_dH;
 
-  // --- Elem-side material properties (constant; valid on boundary faces) ---
+  // --- Elem-side material property (constant; valid on boundary faces) ---
   const MaterialProperty<RealTensorValue> & _K_up;
-  const ADMaterialProperty<std::vector<Real>> & _density;
-  const ADMaterialProperty<std::vector<Real>> & _viscosity;
 };

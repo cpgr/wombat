@@ -68,13 +68,15 @@ VEFVAdvectiveFlux::VEFVAdvectiveFlux(const InputParameters & parameters)
     _z_bottom(getFunctor<ADReal>("z_bottom")),
     _relperm(getFunctor<ADReal>(
         getParam<unsigned int>("fluid_phase") == 0 ? "ve_relperm_n" : "ve_relperm_w")),
+    _density(getFunctor<ADReal>(
+        getParam<unsigned int>("fluid_phase") == 0 ? "ve_density_n" : "ve_density_w")),
+    _viscosity(getFunctor<ADReal>(
+        getParam<unsigned int>("fluid_phase") == 0 ? "ve_viscosity_n" : "ve_viscosity_w")),
     _dPcup_dsatn(_capillary && _fluid_phase == 0 ? &getFunctor<ADReal>("ve_dPcup_dsatn")
                                                  : nullptr),
     _dPcup_dH(_capillary && _fluid_phase == 0 ? &getFunctor<ADReal>("ve_dPcup_dH")
                                               : nullptr),
-    _K_up(getMaterialProperty<RealTensorValue>("ve_K_up")),
-    _density(getADMaterialProperty<std::vector<Real>>("ve_density")),
-    _viscosity(getADMaterialProperty<std::vector<Real>>("ve_viscosity"))
+    _K_up(getMaterialProperty<RealTensorValue>("ve_K_up"))
 {
   if (_fluid_phase >= _dictator.numPhases())
     paramError("fluid_phase", "fluid_phase=", _fluid_phase,
@@ -98,8 +100,15 @@ VEFVAdvectiveFlux::computeQpResidual()
   const Real K_nn = _normal * (_K_up[_qp] * _normal);
 
   // --- Darcy potential gradient . normal, and advecting flux ---
-  const ADReal rho_c = _density[_qp][_fluid_phase];
-  const ADReal mu_c = _viscosity[_qp][_fluid_phase];
+  // Density and viscosity are smooth in pressure, so they are taken at the same
+  // boundary-aware face argument as the geometry/pressure above. singleSidedFaceArg
+  // uses CentralDifference, so on an interior face this is the two-sided face average
+  // (face-correct for a real EOS, AD wrt pp_top on both sides) and on a boundary face
+  // it is the BC-extrapolated value. For constant fluid properties it is exactly that
+  // constant. Being flow-direction independent, it creates no circular dependence with
+  // the upwind selection below.
+  const ADReal rho_c = _density(face, state);
+  const ADReal mu_c = _viscosity(face, state);
   ADReal dphi_dn = grad_pp_n + rho_c * _gravity_magnitude * grad_zt_n;
   if (_capillary && _fluid_phase == 0)
   {
