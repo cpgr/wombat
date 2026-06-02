@@ -1,0 +1,26 @@
+[Tests]
+  design = 'VEMassTimeDerivative.md VEFVMassTimeDerivative.md'
+  issues = '#1'
+
+  [dirac_source]
+    type = CSVDiff
+    input = 'dirac_source.i'
+    csvdiff = 'dirac_source_csv.csv'
+    # GOLD: generate once (run dirac_source.i; confirm co2_integral tracks
+    # analytical_mass and sat_updip > sat_downdip), then copy the output CSV into gold/.
+    requirement = 'A ConstantPointSource DiracKernel shall drive an interior CO2 well in '
+                  'the FE VE formulation, conserving mass (co2_integral tracks the '
+                  'analytic injected volume) and producing a buoyant updip plume (sat '
+                  'updip of the well exceeds sat downdip).'
+  []
+
+  [dirac_source_fv]
+    type = CSVDiff
+    input = 'dirac_source_fv.i'
+    csvdiff = 'dirac_source_fv_csv.csv'
+    # GOLD: as above for dirac_source_fv.i.
+    requirement = 'A ConstantPointSource DiracKernel shall drive an interior CO2 well in '
+                  'the FV VE formulation, conserving mass and producing a buoyant updip '
+                  'plume, carried monotonically (no FE-style ringing).'
+  []
+[]
