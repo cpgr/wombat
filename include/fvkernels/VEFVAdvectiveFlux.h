@@ -30,10 +30,10 @@
  * face quantities come from functors, the kernel never indexes a neighbor
  * material/array and is therefore safe on boundary faces (no neighbor element).
  *
- * rho_c, mu_c and K are taken elem-side; they are constant in
- * VEFluidPropertiesConst / VEPermeability so this is exact. (Revisit upwinding
- * of rho_c and harmonic K averaging when variable density / heterogeneous K are
- * introduced.)
+ * rho_c, mu_c and K are taken elem-side; they are constant when VEFluidProperties
+ * is driven by ConstantFluidProperties (and K via VEPermeability) so this is exact.
+ * (Revisit upwinding of rho_c and harmonic K averaging when a
+ * pressure/temperature-dependent EOS / heterogeneous K are introduced.)
  */
 class VEFVAdvectiveFlux : public FVFluxKernel
 {

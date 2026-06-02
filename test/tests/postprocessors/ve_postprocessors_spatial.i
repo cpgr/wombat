@@ -57,6 +57,19 @@
   VEDictator = ve_dictator
 []
 
+[FluidProperties]
+  [co2_fp]
+    type = ConstantFluidProperties
+    density = 700.0
+    viscosity = 1.0e-3
+  []
+  [brine_fp]
+    type = ConstantFluidProperties
+    density = 1000.0
+    viscosity = 1.0e-3
+  []
+[]
+
 [UserObjects]
   [ve_dictator]
     type = VEDictator
@@ -158,11 +171,10 @@
     phi_bar = 0.2
   []
   [fluid_props]
-    type = VEFluidPropertiesConst
-    rho_co2 = 700.0
-    rho_brine = 1000.0
-    mu_co2 = 1.0e-3
-    mu_brine = 1.0e-3
+    type = VEFluidProperties
+    fp_nw = co2_fp
+    fp_w = brine_fp
+    pp_top = pp_top
   []
   [saturation]
     type = VESaturation

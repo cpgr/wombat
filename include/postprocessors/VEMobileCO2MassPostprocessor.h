@@ -15,7 +15,8 @@
  * to zero, so the full sat_n is treated as mobile -- correct for the
  * no-hysteresis verification cases.
  *
- * rho_co2 is a uniform scalar parameter, consistent with VEFluidPropertiesConst.
+ * rho_co2 is a uniform scalar parameter (valid where the CO2 density is constant,
+ * i.e. VEFluidProperties driven by ConstantFluidProperties).
  * Reads ve_H and ve_phi_bar from materials.
  */
 class VEMobileCO2MassPostprocessor : public ElementIntegralPostprocessor

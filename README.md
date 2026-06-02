@@ -71,7 +71,7 @@ primitives — PorousFlow itself is not forked.
 | **Plume reconstruction** | `VEPlumeReconstruction` (sharp-interface closed form; capillary-fringe Newton inversion, Nordbotten & Dahle 2011) |
 | **Relative permeability** | swappable `VERelativePermeability` user objects — `VERelPermSharpUO` (analytical), `VERelPermTableUO` (tabulated/upscaled), `VERelPermHysteresisUO` (Land/Killough); FE/FV adapters `VERelPerm`/`VEFVRelPerm` |
 | **Capillary pressure** | `VEUpscaledCapPressure` / `VEFVCapPressure` (two-pressure VE), `VECapillaryPressureTable` |
-| **Fluids** | `VEFluidPropertiesConst` (constant density/viscosity; a `PorousFlowBrineCO2` EOS wrap is on the roadmap) |
+| **Fluids** | `VEFluidProperties` (density/viscosity from any `SinglePhaseFluidProperties` UO via `fp_nw`/`fp_w`) driven by `ConstantFluidProperties` (verification) or `CO2FluidProperties`/`BrineFluidProperties` (full P/T EOS) |
 | **Wells & boundaries** | `ConstantPointSource` Dirac wells (FE + FV), `VEFVAdvectiveOutflowBC` (open up-dip outflow), standard Neumann/Dirichlet flux BCs |
 | **Trapping & dissolution** | residual (hysteretic) trapping via `VESaturationMaxAux` + `VERelPermHysteresisUO`; convective dissolution via `VEDissolution` + `VEDissolutionSink`/`VEFVDissolutionSink` |
 | **Diagnostics** | `VEPlumeHeightAux`, `VEGravityNumberAux` (VE-validity indicator), `VEMobileCO2MassPostprocessor`, `VETrappedCO2MassPostprocessor`, `VEDissolvedCO2MassPostprocessor`, `VEPlumeFootprintPostprocessor` |

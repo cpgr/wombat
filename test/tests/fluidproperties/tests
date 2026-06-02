@@ -1,0 +1,16 @@
+[Tests]
+  design = 'VEFluidProperties.md ConstantFluidProperties.md SimpleBrineFluidProperties.md'
+  issues = '#1'
+
+  [simple_brine]
+    type = CSVDiff
+    input = 'simple_brine.i'
+    csvdiff = 'simple_brine_csv.csv'
+    rel_err = 1.0e-5
+    requirement = 'SimpleBrineFluidProperties shall supply fixed-salinity brine density and '
+                  'viscosity through the two-variable (pressure, temperature) '
+                  'SinglePhaseFluidProperties interface consumed by VEFluidProperties, '
+                  'wrapping the three-variable BrineFluidProperties at a constant salt mass '
+                  'fraction.'
+  []
+[]
