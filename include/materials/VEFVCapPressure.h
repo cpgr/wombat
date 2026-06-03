@@ -10,7 +10,8 @@
  * kernel can call .gradient(face, state) to obtain the face-normal gradient of
  * the upscaled capillary pressure via the standard MOOSE FV reconstruction.
  *
- * Sharp-interface formula (Nordbotten-Celia):
+ * Sharp-interface formula (Nordbotten-Celia), with delta_rho = rho_w - rho_n read
+ * per evaluation from the density functors (so it tracks pressure/temperature):
  *   Pc^up(r,t)        = delta_rho * |g| * sat_n(r,t) * H(r,t) / (1 - S_wr) + pc_entry
  *   ve_dPcup_dsatn    = delta_rho * |g| * H(r,t) / (1 - S_wr)
  *
@@ -23,13 +24,14 @@
  * Dirichlet BC at a boundary face, so it must not be used for the flux.
  *
  * Parameters:
- *   sat_n     -- name of the FV saturation functor (typically the variable name)
- *   z_top     -- name of the z_T functor (FV aux variable or variable)
- *   z_bottom  -- name of the z_B functor
- *   S_wr      -- residual water saturation [-]; must match VEPlumeReconstruction
- *   delta_rho -- rho_brine - rho_co2 [kg/m3]; positive for buoyant CO2
- *   gravity   -- gravity vector [m/s2]; only the magnitude is used
- *   pc_entry  -- constant entry pressure offset [Pa] (default 0)
+ *   sat_n      -- name of the FV saturation functor (typically the variable name)
+ *   z_top      -- name of the z_T functor (FV aux variable or variable)
+ *   z_bottom   -- name of the z_B functor
+ *   S_wr       -- residual water saturation [-]; must match VEPlumeReconstruction
+ *   density_nw -- non-wetting (CO2) density functor [kg/m3] (default ve_density_n)
+ *   density_w  -- wetting (brine) density functor [kg/m3] (default ve_density_w)
+ *   gravity    -- gravity vector [m/s2]; only the magnitude is used
+ *   pc_entry   -- constant entry pressure offset [Pa] (default 0)
  *
  * FE counterpart: VEUpscaledCapPressure (qp-based material).
  */
@@ -41,11 +43,12 @@ public:
 
 protected:
   const Real _S_wr;
-  const Real _delta_rho;
   const Real _gravity_magnitude;
   const Real _pc_entry;
 
   const Moose::Functor<ADReal> & _sat_n;
   const Moose::Functor<ADReal> & _z_top;
   const Moose::Functor<ADReal> & _z_bottom;
+  const Moose::Functor<ADReal> & _rho_n;
+  const Moose::Functor<ADReal> & _rho_w;
 };

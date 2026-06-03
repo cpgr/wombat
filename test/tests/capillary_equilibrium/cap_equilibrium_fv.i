@@ -168,7 +168,6 @@
     z_top = z_top
     z_bottom = z_bottom
     S_wr = 0.0
-    delta_rho = 300.0
     gravity = '0 0 -9.81'
   []
   [fv_fluid_props]
