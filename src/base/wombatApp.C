@@ -3,6 +3,7 @@
 #include "AppFactory.h"
 #include "ModulesApp.h"
 #include "MooseSyntax.h"
+#include "ActionFactory.h"
 
 InputParameters
 wombatApp::validParams()
@@ -28,6 +29,10 @@ wombatApp::registerAll(Factory & f, ActionFactory & af, Syntax & syntax)
   Registry::registerActionsTo(af, {"wombatApp"});
 
   /* register custom execute flags, action syntax, etc. here */
+
+  // VE flow Physics: concise [Physics/VEFlow/...] input syntax.
+  registerSyntax("VEFlowFE", "Physics/VEFlow/FiniteElement/*");
+  registerSyntax("VEFlowFV", "Physics/VEFlow/FiniteVolume/*");
 }
 
 void

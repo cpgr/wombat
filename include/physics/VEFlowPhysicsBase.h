@@ -1,0 +1,55 @@
+//* Vertical-equilibrium CCS MOOSE application (wombat)
+//*
+//* VEFlowPhysicsBase: common parameters and shared object-creation helpers for
+//* the VE two-phase (CO2-brine) flow Physics. Concrete discretizations are
+//* VEFlowFE (continuous Galerkin) and VEFlowFV (cell-centered finite volume),
+//* mirroring the framework's DiffusionPhysicsBase / DiffusionCG / DiffusionFV
+//* pattern. The Physics adds the two primary variables (pp_top, sat_n), the four
+//* depth-integrated flow kernels (CO2 + brine, storage + flux), and the standard
+//* material chain, so a standard VE input no longer hand-writes [Variables],
+//* [Kernels]/[FVKernels], [Materials], or [FunctorMaterials].
+
+#pragma once
+
+#include "PhysicsBase.h"
+
+/**
+ * Base class hosting the parameters and shared helpers common to the VE flow
+ * Physics. Abstract: the variable type and the kernel/material wiring that
+ * differ between FE and FV are supplied by the derived classes.
+ */
+class VEFlowPhysicsBase : public PhysicsBase
+{
+public:
+  static InputParameters validParams();
+
+  VEFlowPhysicsBase(const InputParameters & parameters);
+
+protected:
+  /// Name of the pore-pressure primary variable (brine mass equation).
+  const VariableName & _pressure_var;
+  /// Name of the depth-averaged CO2 saturation primary variable (CO2 mass equation).
+  const VariableName & _saturation_var;
+  /// True when eos_reference_depth = interface (rho/mu at the CO2-brine contact).
+  const bool _interface_eos;
+  /// True when the convective-dissolution sink kernel should be added.
+  const bool _dissolution;
+  /// True when the capillary-pressure term and its material(s) should be added.
+  const bool _capillary;
+
+  /// Forward a coupled-var-or-constant Physics parameter to a downstream object.
+  void assignCoupled(InputParameters & params, const std::string & name) const;
+
+  /// Forward S_wr to a downstream object only if the user set it (else the object
+  /// keeps its own default). Shared by the interface-EOS and capillary materials.
+  void assignSwr(InputParameters & params) const;
+
+  /// Add the elemental materials shared by FE and FV: VEPorosity, VEPermeability,
+  /// VESaturation, and the elemental VEFluidProperties (used by the mass-storage
+  /// kernels in both discretizations).
+  void addCommonMaterials();
+
+private:
+  /// Add the elemental VEFluidProperties material (ve_density / ve_viscosity).
+  void addFluidPropertiesMaterial();
+};

@@ -1,0 +1,57 @@
+[Tests]
+  design = 'VEFlowFE.md VEFlowFV.md'
+  issues = '#2'
+
+  [ve_flow_fe]
+    type = CSVDiff
+    input = 've_flow_fe.i'
+    csvdiff = 've_flow_fe_csv.csv'
+    cli_args = 'Executioner/end_time=5e4'
+    rel_err = 1.0e-4
+    abs_zero = 1.0e-6
+    requirement = 'The [Physics/VEFlow/FiniteElement] action shall create the primary '
+                  'variables, the FE flow kernels and the FE material chain so that a '
+                  'sloped-aquifer solve reproduces the hand-assembled nc_sloped.i result '
+                  '(co2_integral, gravity_nose) to within rel_err = 1e-4.'
+  []
+
+  [ve_flow_fv]
+    type = CSVDiff
+    input = 've_flow_fv.i'
+    csvdiff = 've_flow_fv_csv.csv'
+    cli_args = 'Executioner/end_time=5e4'
+    rel_err = 1.0e-4
+    abs_zero = 1.0e-6
+    requirement = 'The [Physics/VEFlow/FiniteVolume] action shall create the FV primary '
+                  'variables, the FV flow kernels, the elemental material chain and the '
+                  'functor materials so that a sloped-aquifer solve reproduces the '
+                  'hand-assembled nc_sloped_fv.i result to within rel_err = 1e-4.'
+  []
+
+  [ve_flow_fe_capillary]
+    type = PetscJacobianTester
+    input = 've_flow_fe_capillary.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-4
+    cli_args = 'Executioner/end_time=1000 Executioner/dt=500 -mat_fd_type ds '
+               'ICs/sat_n_ic/value=0.5 BCs/sat_n_left/value=0.5'
+    requirement = 'The [Physics/VEFlow/FiniteElement] action with capillary = true shall '
+                  'create VEPlumeReconstruction and VEUpscaledCapPressure and set capillary '
+                  'on VEAdvectiveFluxS, producing a Jacobian consistent with the PETSc '
+                  'finite-difference approximation to within ratio tolerance 1e-7.'
+  []
+
+  [ve_flow_fv_capillary]
+    type = PetscJacobianTester
+    input = 've_flow_fv_capillary.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-4
+    cli_args = 'Executioner/end_time=1000 Executioner/dt=500 -mat_fd_type ds '
+               'ICs/sat_n_ic/value=0.5 FVBCs/sat_n_left/value=0.5'
+    requirement = 'The [Physics/VEFlow/FiniteVolume] action with capillary = true shall '
+                  'create the VEFVCapPressure functor material (deriving delta_rho from the '
+                  'density functors) and set capillary on VEFVAdvectiveFlux, producing a '
+                  'Jacobian consistent with the PETSc finite-difference approximation to '
+                  'within ratio tolerance 1e-7.'
+  []
+[]
