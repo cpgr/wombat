@@ -30,6 +30,18 @@
 #       --z-top-var z_top --z-bottom-var z_bottom --h-var h_plume \
 #       --rho-n-var rho_n --rho-w-var rho_w
 #
+#   # drape onto the ORIGINAL 3D geology instead of an extruded column mesh -- exact
+#   # faults/layering/topography, with the mesh's porosity/permeability carried through:
+#   scripts/ve_reconstruct_vertical.py ve_reconstruction_demo_out.e plume3d_orig.e \
+#       --original-mesh field_model.e --mode sharp --s-wr 0.0 --vertical up --sat-min 1e-2 \
+#       --z-top-var z_top --z-bottom-var z_bottom --h-var h_plume
+#
+#   field_model.e is the em2ex 3D grid the 2D run was upscaled from (via ex2ve). This
+#   synthetic GeneratedMesh demo has no such original grid, so the command above is shown
+#   for the field workflow; on a real case each original node is mapped to its nearest VE
+#   column and sat_co2 is evaluated at the node's true depth below z_top (add --no-carry
+#   to write saturation only, without the porosity/permeability fields).
+#
 #   --sat-min clips the plume FOOTPRINT: continuous-Galerkin FE advection leaves a thin
 #   diffuse halo of tiny sat_n ahead of the front, which would otherwise reconstruct as
 #   a faint sheet over the whole top surface (worst in sharp mode, where any h > 0 paints
