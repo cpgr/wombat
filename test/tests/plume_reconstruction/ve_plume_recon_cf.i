@@ -31,11 +31,6 @@
   xmin = 0
   xmax = 1000
 []
-
-[GlobalParams]
-  VEDictator = ve_dictator
-[]
-
 [FluidProperties]
   [co2_fp]
     type = ConstantFluidProperties
@@ -50,11 +45,6 @@
 []
 
 [UserObjects]
-  [ve_dictator]
-    type = VEDictator
-    porous_flow_vars = 'pp_top sat_n'
-    ve_flavour = capillary_fringe
-  []
   [ve_pc_table]
     type = VECapillaryPressureTable
     sat_lr = 0.2

@@ -52,11 +52,6 @@
   xmin = 0
   xmax = 1000
 []
-
-[GlobalParams]
-  VEDictator = ve_dictator
-[]
-
 [FluidProperties]
   [co2_fp]
     type = ConstantFluidProperties
@@ -67,14 +62,6 @@
     type = ConstantFluidProperties
     density = 1000.0
     viscosity = 1.0e-3
-  []
-[]
-
-[UserObjects]
-  [ve_dictator]
-    type = VEDictator
-    porous_flow_vars = 'pp_top sat_n'
-    ve_flavour = sharp_interface
   []
 []
 

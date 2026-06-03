@@ -1,7 +1,6 @@
 #pragma once
 
 #include "FVElementalKernel.h"
-#include "VEDictator.h"
 
 /**
  * VEFVMassTimeDerivative
@@ -28,7 +27,6 @@ public:
 protected:
   ADReal computeQpResidual() override;
 
-  const VEDictator & _dictator;
   const unsigned int _fluid_phase;
 
   // Geometry from FV-variable cell values (static, non-AD).

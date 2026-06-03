@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ADKernelGrad.h"
-#include "VEDictator.h"
 
 /**
  * VEAdvectiveFluxBase
@@ -38,9 +37,6 @@ public:
   VEAdvectiveFluxBase(const InputParameters & parameters);
 
 protected:
-  /// VE configuration object.
-  const VEDictator & _dictator;
-
   /// Fluid phase this kernel acts on (0 = CO2, 1 = brine).
   const unsigned int _fluid_phase;
 

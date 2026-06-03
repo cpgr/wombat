@@ -54,9 +54,11 @@ primitives — PorousFlow itself is not forked.
   path. The FV path (with optional TVD flux limiting) is the robust choice for the
   advection-dominated migration that VE problems present; the FE path is convenient for
   smooth/diffusive cases and some verification work.
-- **Geometry single-source-of-truth:** the `VEDictator` user object (a geometry-aware
-  subclass of `PorousFlowDictator`) carries the formation geometry and the VE "flavour"
-  (`sharp_interface` or `capillary_fringe`).
+- **Geometry from the mesh:** formation geometry (`H`, `z_T`, `z_B`, `grad(z_T)`) is
+  supplied by the `VEGeometry` material (FE) or by coupled `z_top`/`z_bottom` variables
+  (FV), sourced from the upscaled Exodus mesh. The VE "flavour" (`sharp_interface` vs.
+  `capillary_fringe`) is selected by which relperm / capillary-pressure objects are wired
+  in, not by a central configuration object.
 - **Field-scale input:** petrophysical fields (`H`, `z_T`, `phi_bar`, `K_up`, upscaled
   rel-perm / capillary tables) are read directly from an Exodus mesh produced by an
   external Petrel-to-2D upscaling workflow.

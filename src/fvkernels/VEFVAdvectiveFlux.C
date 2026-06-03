@@ -13,7 +13,6 @@ VEFVAdvectiveFlux::validParams()
       "relative permeability is upwinded at the face via a functor (ve_relperm_n/w "
       "from VEFVRelPerm), so Dirichlet saturation inlets drive inflow.");
 
-  params.addRequiredParam<UserObjectName>("VEDictator", "The VEDictator UserObject.");
   params.addParam<unsigned int>("fluid_phase", 0,
       "Fluid phase index (0 = CO2, 1 = brine).");
   RealVectorValue g_default(0.0, 0.0, -9.81);
@@ -57,7 +56,6 @@ VEFVAdvectiveFlux::validParams()
 
 VEFVAdvectiveFlux::VEFVAdvectiveFlux(const InputParameters & parameters)
   : FVFluxKernel(parameters),
-    _dictator(getUserObject<VEDictator>("VEDictator")),
     _fluid_phase(getParam<unsigned int>("fluid_phase")),
     _gravity_magnitude(getParam<RealVectorValue>("gravity").norm()),
     _capillary(getParam<bool>("capillary")),
@@ -78,9 +76,10 @@ VEFVAdvectiveFlux::VEFVAdvectiveFlux(const InputParameters & parameters)
                                               : nullptr),
     _K_up(getMaterialProperty<RealTensorValue>("ve_K_up"))
 {
-  if (_fluid_phase >= _dictator.numPhases())
+  // VE is always a two-phase CO2-brine system (phase 0 = CO2, 1 = brine).
+  if (_fluid_phase > 1)
     paramError("fluid_phase", "fluid_phase=", _fluid_phase,
-               " but VEDictator reports only ", _dictator.numPhases(), " phases.");
+               " but a VE simulation has only 2 fluid phases (0 = CO2, 1 = brine).");
 }
 
 ADReal

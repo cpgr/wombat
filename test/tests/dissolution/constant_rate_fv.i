@@ -22,11 +22,6 @@
   xmin = 0
   xmax = 1
 []
-
-[GlobalParams]
-  VEDictator = ve_dictator
-[]
-
 [FluidProperties]
   [co2_fp]
     type = ConstantFluidProperties
@@ -41,11 +36,6 @@
 []
 
 [UserObjects]
-  [ve_dictator]
-    type = VEDictator
-    porous_flow_vars = 'pp_top sat_n'
-    ve_flavour = sharp_interface
-  []
   [relperm_uo]
     type = VERelPermSharpUO
     S_wr = 0.0

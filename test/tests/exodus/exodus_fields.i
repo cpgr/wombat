@@ -5,7 +5,7 @@
 # Reads H, phi_bar, K_up_xx/yy/xy, z_top via initial_from_file_var, feeds them to VEGeometry
 # (thickness mode), VEPorosity and VEPermeability, and outputs the resulting material
 # properties (ve_H, ve_phi_bar, ve_K_up) via MaterialReal[Tensor]Aux. No flow solve is needed
-# (no VEDictator) -- this isolates the field-reading + material-plumbing path.
+# (no flow solve) -- this isolates the field-reading + material-plumbing path.
 #
 # At the element containing (50,50) the analytic fields give (see generator):
 #   ve_H = 102.5, ve_phi_bar = 0.21, ve_K_up = [[1.05e-12, 2.5e-14],[2.5e-14, 5e-13]].

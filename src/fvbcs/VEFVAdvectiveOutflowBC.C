@@ -16,7 +16,6 @@ VEFVAdvectiveOutflowBC::validParams()
       "points inward, so it never draws the phase back in. Assign to variable=sat_n "
       "(fluid_phase=0) on the updip boundary.");
 
-  params.addRequiredParam<UserObjectName>("VEDictator", "The VEDictator UserObject.");
   params.addParam<unsigned int>("fluid_phase", 0,
       "Fluid phase index (0 = CO2, 1 = brine).");
   RealVectorValue g_default(0.0, 0.0, -9.81);
@@ -42,7 +41,6 @@ VEFVAdvectiveOutflowBC::validParams()
 
 VEFVAdvectiveOutflowBC::VEFVAdvectiveOutflowBC(const InputParameters & parameters)
   : FVFluxBC(parameters),
-    _dictator(getUserObject<VEDictator>("VEDictator")),
     _fluid_phase(getParam<unsigned int>("fluid_phase")),
     _gravity_magnitude(getParam<RealVectorValue>("gravity").norm()),
     _pp_top(getFunctor<ADReal>("pp_top")),
@@ -54,9 +52,10 @@ VEFVAdvectiveOutflowBC::VEFVAdvectiveOutflowBC(const InputParameters & parameter
     _density(getADMaterialProperty<std::vector<Real>>("ve_density")),
     _viscosity(getADMaterialProperty<std::vector<Real>>("ve_viscosity"))
 {
-  if (_fluid_phase >= _dictator.numPhases())
+  // VE is always a two-phase CO2-brine system (phase 0 = CO2, 1 = brine).
+  if (_fluid_phase > 1)
     paramError("fluid_phase", "fluid_phase=", _fluid_phase,
-               " but VEDictator reports only ", _dictator.numPhases(), " phases.");
+               " but a VE simulation has only 2 fluid phases (0 = CO2, 1 = brine).");
 }
 
 ADReal

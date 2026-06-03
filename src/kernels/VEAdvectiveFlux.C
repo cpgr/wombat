@@ -8,9 +8,6 @@ VEAdvectiveFluxBase::validParams()
 {
   InputParameters params = ADKernelGrad::validParams();
 
-  params.addRequiredParam<UserObjectName>("VEDictator",
-                                         "The VEDictator UserObject for this simulation.");
-
   params.addParam<unsigned int>(
       "fluid_phase",
       0,
@@ -31,7 +28,6 @@ VEAdvectiveFluxBase::validParams()
 
 VEAdvectiveFluxBase::VEAdvectiveFluxBase(const InputParameters & parameters)
   : ADKernelGrad(parameters),
-    _dictator(getUserObject<VEDictator>("VEDictator")),
     _fluid_phase(getParam<unsigned int>("fluid_phase")),
     _gravity_magnitude(getParam<RealVectorValue>("gravity").norm()),
     _H(getMaterialProperty<Real>("ve_H")),
@@ -41,13 +37,12 @@ VEAdvectiveFluxBase::VEAdvectiveFluxBase(const InputParameters & parameters)
     _viscosity(getADMaterialProperty<std::vector<Real>>("ve_viscosity")),
     _grad_z_top(getMaterialProperty<RealGradient>("ve_grad_z_top"))
 {
-  if (_fluid_phase >= _dictator.numPhases())
+  // VE is always a two-phase CO2-brine system (phase 0 = CO2, 1 = brine).
+  if (_fluid_phase > 1)
     paramError("fluid_phase",
                "fluid_phase=",
                _fluid_phase,
-               " but the VEDictator reports only ",
-               _dictator.numPhases(),
-               " fluid phases (0-indexed).");
+               " but a VE simulation has only 2 fluid phases (0 = CO2, 1 = brine).");
 
   if (_gravity_magnitude == 0.0)
     paramWarning("gravity",

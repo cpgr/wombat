@@ -22,7 +22,7 @@ class SinglePhaseFluidProperties;
  *
  * Declares (identical shape to the old VEFluidPropertiesConst, so every kernel
  * and material that consumed those properties is unchanged), indexed by phase
- * (0 = non-wetting, 1 = wetting), matching the VEDictator phase convention:
+ * (0 = non-wetting, 1 = wetting), matching the VE phase convention:
  *   ve_density   [kg/m3]  -- ADMaterialProperty, size 2: [rho_nw, rho_w]
  *   ve_viscosity [Pa*s]   -- ADMaterialProperty, size 2: [mu_nw,  mu_w]
  *

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ADTimeKernelValue.h"
-#include "VEDictator.h"
 
 /**
  * VEMassTimeDerivative
@@ -40,9 +39,6 @@ public:
 
 protected:
   ADReal precomputeQpResidual() override;
-
-  /// VE configuration object.
-  const VEDictator & _dictator;
 
   /// Fluid phase this kernel acts on (0 = CO2, 1 = brine).
   const unsigned int _fluid_phase;

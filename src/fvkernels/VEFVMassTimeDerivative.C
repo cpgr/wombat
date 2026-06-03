@@ -10,7 +10,6 @@ VEFVMassTimeDerivative::validParams()
       "Finite-volume depth-integrated mass storage term for one fluid phase: "
       "d/dt(H * phi_bar * rho_c * S_c). FV analogue of VEMassTimeDerivative.");
 
-  params.addRequiredParam<UserObjectName>("VEDictator", "The VEDictator UserObject.");
   params.addParam<unsigned int>("fluid_phase", 0,
       "Fluid phase index (0 = CO2, 1 = brine). Use fluid_phase=0 on variable=sat_n "
       "and fluid_phase=1 on variable=pp_top.");
@@ -23,7 +22,6 @@ VEFVMassTimeDerivative::validParams()
 
 VEFVMassTimeDerivative::VEFVMassTimeDerivative(const InputParameters & parameters)
   : FVElementalKernel(parameters),
-    _dictator(getUserObject<VEDictator>("VEDictator")),
     _fluid_phase(getParam<unsigned int>("fluid_phase")),
     _z_top(coupledValue("z_top")),
     _z_bottom(coupledValue("z_bottom")),
@@ -33,9 +31,10 @@ VEFVMassTimeDerivative::VEFVMassTimeDerivative(const InputParameters & parameter
     _saturation(getADMaterialProperty<std::vector<Real>>("ve_saturation")),
     _saturation_old(getMaterialPropertyOld<std::vector<Real>>("ve_saturation"))
 {
-  if (_fluid_phase >= _dictator.numPhases())
+  // VE is always a two-phase CO2-brine system (phase 0 = CO2, 1 = brine).
+  if (_fluid_phase > 1)
     paramError("fluid_phase", "fluid_phase=", _fluid_phase,
-               " but VEDictator reports only ", _dictator.numPhases(), " phases.");
+               " but a VE simulation has only 2 fluid phases (0 = CO2, 1 = brine).");
 }
 
 ADReal

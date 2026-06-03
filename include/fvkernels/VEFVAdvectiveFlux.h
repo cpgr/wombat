@@ -1,7 +1,6 @@
 #pragma once
 
 #include "FVFluxKernel.h"
-#include "VEDictator.h"
 
 /**
  * VEFVAdvectiveFlux
@@ -51,7 +50,6 @@ public:
 protected:
   ADReal computeQpResidual() override;
 
-  const VEDictator & _dictator;
   const unsigned int _fluid_phase;
   const Real _gravity_magnitude;
 
