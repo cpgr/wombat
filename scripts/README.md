@@ -59,12 +59,26 @@ python /path/to/scripts/ve_reconstruct_vertical.py run_out.e plume3d_fringe.e \
     --n-layers 40 --vertical up --sat-min 1e-2 \
     --z-top-var z_top --z-bottom-var z_bottom --h-var h_plume \
     --rho-n-var rho_n --rho-w-var rho_w
+
+# drape onto the ORIGINAL 3D geology (em2ex grid) instead of an extruded column
+# mesh -- exact faults/layering/topography, with porosity/permeability carried through
+python /path/to/scripts/ve_reconstruct_vertical.py run_out.e plume3d_orig.e \
+    --original-mesh field_model.e --mode sharp --s-wr 0.0 --vertical up --sat-min 1e-2 \
+    --z-top-var z_top --z-bottom-var z_bottom --h-var h_plume
 ```
 
 Open `plume3d_*.e` in ParaView and colour by `sat_co2` (`co2_region`: 0 brine / 1 mobile
 / 2 trapped). `--sat-min` drops the thin numerical-diffusion halo so only the real plume
 footprint is drawn; `--vertical up`/`down` sets the z convention (`up` -> bottom at
 `z_top - H`). `python ve_reconstruct_vertical.py -h` lists all options.
+
+By default the output is a synthetic extruded column mesh (`--n-layers` controls the
+vertical resolution). With **`--original-mesh ORIG.e`** the reconstruction is draped onto
+the original 3D mesh instead: each original node is mapped to its nearest 2D VE column and
+`sat_co2` is evaluated at the node's real depth below `z_top`, so the plume sits in the
+exact geology. The original mesh's elemental fields (porosity, permeability, ...) are
+carried into the output for context (`--no-carry` to omit them). `--n-layers` is ignored
+in this mode (the vertical resolution is the original mesh's).
 
 ### Notes
 

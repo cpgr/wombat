@@ -8,7 +8,15 @@ historical maximum saturation sat_n_max.  Under the VE assumption each vertical 
 is in instantaneous capillary-gravity equilibrium, so the full 3D saturation field can
 be reconstructed *after the fact* as a pointwise function of vertical position.  This
 script does that for every timestep stored in the 2D Exodus file and writes a transient
-3D Exodus on a static extruded column mesh (no solve -- pure evaluate-and-write).
+3D Exodus (no solve -- pure evaluate-and-write).
+
+Two output geometries:
+  * default: a static extruded column mesh (QUAD->HEX8, TRI->WEDGE6), N layers per column.
+  * --original-mesh ORIG.e: drape the reconstruction onto the ORIGINAL 3D mesh (the em2ex
+    grid), so the plume sits in the exact geology (faults, layering, topography). Each
+    original node is mapped to its nearest 2D VE column and S_n is evaluated at the node's
+    real depth below z_top; the original mesh's elemental fields (porosity, permeability,
+    ...) are carried through to the output (disable with --no-carry).
 
 Vertical profile (let xi be depth below the top surface, 0 <= xi <= H; the mobile
 CO2-brine contact is at xi = h = ve_h; zeta = h - xi is height above the contact):
@@ -338,6 +346,159 @@ def trapped_extent(mesh, H, args, step):
     )
 
 
+# --------------------------------------------------------------------------------------
+# Reconstruction onto the ORIGINAL 3D mesh (--original-mesh)
+# --------------------------------------------------------------------------------------
+class Mesh3D:
+    """Reads the original 3D mesh (e.g. the em2ex HEX8 grid): coords, per-block
+    connectivity (kept 1-based for write-back), and the names/values of its elemental
+    fields at the first step (em2ex writes a single static step)."""
+
+    def __init__(self, path):
+        self.exo = Exodus(path, mode="r", array_type="numpy")
+        x, y, z = self.exo.get_coords()
+        self.x = np.asarray(x, dtype=float)
+        self.y = np.asarray(y, dtype=float)
+        self.z = np.asarray(z, dtype=float)
+        self.nn = self.x.size
+        self.elem_vars = list(self.exo.get_element_variable_names() or [])
+        self.blocks = []  # dict(id, elem_type, npe, n_elem, conn1)  conn1 = 1-based flat
+        for blk_id in self.exo.get_elem_blk_ids():
+            info = self.exo.elem_blk_info(blk_id)
+            et = info[0].decode() if isinstance(info[0], bytes) else info[0]
+            n_elem, npe = int(info[1]), int(info[2])
+            conn, _ne, _npe = self.exo.get_elem_connectivity(blk_id)
+            conn1 = np.asarray(conn, dtype=np.int64).reshape(-1)  # already 1-based
+            self.blocks.append(
+                dict(id=blk_id, elem_type=et, npe=npe, n_elem=n_elem, conn1=conn1)
+            )
+        self.n_elem = sum(b["n_elem"] for b in self.blocks)
+
+    def elem_values(self, name, blk_id):
+        return np.asarray(
+            self.exo.get_element_variable_values(blk_id, name, 1), dtype=float
+        )
+
+    def close(self):
+        self.exo.close()
+
+
+def map_nearest_column(x2, y2, x3, y3):
+    """Index of the nearest 2D node (its VE column) for each original 3D node.
+
+    Bucketed nearest-neighbour, numpy-only (scipy is not in the seacas env). Corner-point
+    pillars can be slanted, so an exact (x, y) match is not assumed -- a node at depth may
+    have drifted laterally from its top-face node, so we take the nearest 2D column.
+    """
+    n2 = x2.size
+    xmin, ymin = float(x2.min()), float(y2.min())
+    span_x = max(float(x2.max()) - xmin, 1e-30)
+    span_y = max(float(y2.max()) - ymin, 1e-30)
+    cell = float(np.sqrt((span_x * span_y) / max(n2, 1))) or 1.0  # ~1 node/bucket
+
+    def bkey(x, y):
+        return (int((x - xmin) // cell), int((y - ymin) // cell))
+
+    buckets = {}
+    for i in range(n2):
+        buckets.setdefault(bkey(x2[i], y2[i]), []).append(i)
+
+    col = np.empty(x3.size, dtype=np.int64)
+    n_far = 0
+    for j in range(x3.size):
+        kx, ky = bkey(x3[j], y3[j])
+        best, bestd = -1, float("inf")
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for i in buckets.get((kx + dx, ky + dy), ()):
+                    d = (x2[i] - x3[j]) ** 2 + (y2[i] - y3[j]) ** 2
+                    if d < bestd:
+                        bestd, best = d, i
+        if best < 0:  # empty neighbourhood -> global nearest (rare)
+            best = int(np.argmin((x2 - x3[j]) ** 2 + (y2 - y3[j]) ** 2))
+            n_far += 1
+        col[j] = best
+    if n_far:
+        sys.stderr.write(
+            f"warning: {n_far} original nodes had no 2D column within one bucket; "
+            "used the global-nearest column for those\n"
+        )
+    return col
+
+
+def reconstruct_on_original(args, mesh, z_top, H, sw_curve):
+    """Reconstruct S_n onto the ORIGINAL 3D mesh (exact geology -- faults, layering,
+    topography), carrying the mesh's elemental fields (porosity/permeability/...) through
+    to the output. S_n is written nodally; the original elemental fields are static."""
+    orig = Mesh3D(args.original_mesh)
+    col = map_nearest_column(mesh.x, mesh.y, orig.x, orig.y)
+
+    # Static per-original-node column geometry, gathered through the column map.
+    z_top3 = z_top[col]
+    H3 = H[col]
+    sign = 1.0 if args.vertical == "up" else -1.0
+    xi3 = sign * (z_top3 - orig.z)   # depth below the top surface (>=0 inside formation)
+    above = xi3 < 0.0                # nodes above z_top (e.g. overburden) carry no CO2
+
+    carry = [] if args.no_carry else list(orig.elem_vars)
+    carry_vals = {nm: {b["id"]: orig.elem_values(nm, b["id"]) for b in orig.blocks}
+                  for nm in carry}
+
+    if os.path.exists(args.output):
+        os.remove(args.output)
+    out = Exodus(
+        args.output, mode="w", array_type="numpy",
+        title="VE reconstruction on original mesh", numDims=3,
+        numNodes=orig.nn, numElems=orig.n_elem, numBlocks=len(orig.blocks),
+        numNodeSets=0, numSideSets=0,
+    )
+    out.put_coord_names(["x", "y", "z"])
+    out.put_coords(orig.x, orig.y, orig.z)
+    for b in orig.blocks:
+        out.put_elem_blk_info(b["id"], b["elem_type"], b["n_elem"], b["npe"], 0)
+        out.put_elem_connectivity(b["id"], b["conn1"])
+
+    node_names = [args.sat_name, args.region_name]
+    out.set_node_variable_number(len(node_names))
+    for i, nm in enumerate(node_names, start=1):
+        out.put_node_variable_name(nm, i)
+    if carry:
+        out.set_element_variable_number(len(carry))
+        for i, nm in enumerate(carry, start=1):
+            out.put_element_variable_name(nm, i)
+
+    for step in range(1, mesh.times.size + 1):
+        h = mesh.nodal(args.h_var, step)
+        if args.sat_min > 0.0:
+            sat_bar = mesh.nodal(args.sat_var, step)
+            h = np.where(sat_bar < args.sat_min, 0.0, h)
+        drho = (density_contrast(mesh, args, step)
+                if args.mode == "fringe" else np.zeros(mesh.nn))
+        h_max = trapped_extent(mesh, H, args, step)
+
+        sat3, reg3 = reconstruct_column_saturation(
+            xi3, H3, h[col], drho[col], args, sw_curve,
+            None if h_max is None else h_max[col],
+        )
+        sat3[above] = 0.0
+        reg3[above] = 0.0
+
+        out.put_time(step, float(mesh.times[step - 1]))
+        out.put_node_variable_values(args.sat_name, step, sat3)
+        out.put_node_variable_values(args.region_name, step, reg3)
+        for nm in carry:
+            for b in orig.blocks:
+                out.put_element_variable_values(b["id"], nm, step, carry_vals[nm][b["id"]])
+
+    out.close()
+    orig.close()
+    mesh.close()
+    print(
+        f"wrote {args.output}: {orig.nn} nodes (original mesh), {orig.n_elem} elems, "
+        f"{mesh.times.size} steps, mode={args.mode}, carried {len(carry)} elem vars"
+    )
+
+
 def main():
     args = parse_args()
     mesh = Mesh2D(args.input)
@@ -346,6 +507,12 @@ def main():
 
     sw_curve = build_curve(args, mesh)
     z_top, H = geometry(mesh, args)
+
+    # Alternate mode: drape the reconstruction onto the original 3D geology.
+    if args.original_mesh:
+        reconstruct_on_original(args, mesh, z_top, H, sw_curve)
+        return
+
     x3, y3, z3, xi = extrude_nodes(mesh, z_top, H, args)
     blocks3 = extrude_connectivity(mesh, args)
 
@@ -431,9 +598,17 @@ def parse_args():
     p.add_argument("--mode", choices=["sharp", "fringe"], default="sharp",
                    help="vertical saturation model")
     p.add_argument("--n-layers", type=int, default=20,
-                   help="number of vertical element layers")
+                   help="number of vertical element layers (extruded mode only)")
     p.add_argument("--vertical", choices=["up", "down"], default="up",
                    help="z convention: 'up' -> bottom at z_top-H; 'down' -> z_top+H")
+    p.add_argument("--original-mesh",
+                   help="reconstruct onto this original 3D mesh (exact geology: faults, "
+                        "layering, topography) instead of a synthetic extruded column "
+                        "mesh; S_n is written nodally and the mesh's elemental fields "
+                        "(porosity/permeability/...) are carried through to the output")
+    p.add_argument("--no-carry", action="store_true",
+                   help="with --original-mesh, do NOT copy the original elemental fields "
+                        "into the output (smaller file; saturation only)")
 
     # field names in the 2D file
     p.add_argument("--z-top-var", default="z_top", help="top-surface elevation field")
