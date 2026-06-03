@@ -26,8 +26,9 @@
  *   L         = characteristic horizontal length [m]
  *
  * H and phi_bar vary spatially so Gamma is computed per quadrature point
- * and averaged to the element.  k_v, delta_rho, mu_n, Q, L, and g are
- * uniform scalar parameters.
+ * and averaged to the element.  k_v is a coupled value (a constant or a
+ * spatially-varying AuxVariable, e.g. an upscaled PERMZ field); delta_rho,
+ * mu_n, Q, L, and g are uniform scalar parameters.
  *
  * Reads:
  *   - ve_H       : material property from VEGeometry
@@ -47,7 +48,7 @@ protected:
   const MaterialProperty<Real> & _H;
   const MaterialProperty<Real> & _phi_bar;
 
-  const Real _k_v;
+  const VariableValue & _k_v;
   const Real _delta_rho;
   const Real _mu_n;
   const Real _Q;

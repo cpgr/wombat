@@ -14,4 +14,16 @@
                   'all verified against analytical values for a uniform-field '
                   'one-step test (h = 15 m, gamma = 0.005886, Pc^up = 44145 Pa).'
   []
+
+  [ve_gravity_number_coupled]
+    type = CSVDiff
+    input = 've_gravity_number_coupled.i'
+    csvdiff = 've_gravity_number_coupled_csv.csv'
+    rel_err = 1.0e-5
+    requirement = 'VEGravityNumberAux shall accept k_v as a coupled, spatially-varying '
+                  'AuxVariable (e.g. an upscaled PERMZ field), reproducing the analytic '
+                  'gravity number gamma(x) = gamma0 * (1 + x/1000) for k_v(x) = '
+                  '1e-12*(1 + x/1000): gamma_avg = 0.008829, gamma_min = 0.0061803, '
+                  'gamma_max = 0.0114777.'
+  []
 []
