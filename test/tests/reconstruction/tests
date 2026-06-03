@@ -1,0 +1,17 @@
+[Tests]
+  design = 'VEPlumeReconstruction.md'
+  issues = '#1'
+
+  [reconstruction_demo]
+    type = RunApp
+    input = 've_reconstruction_demo.i'
+    # Short run: this only guards that the demo input (which carries the h_plume /
+    # rho_n / rho_w AuxVariables consumed by scripts/ve_reconstruct_vertical.py)
+    # keeps executing as the code evolves. The full transient is for manual use.
+    cli_args = 'Executioner/end_time=1.0e5 Outputs/time_step_interval=1'
+    requirement = 'The vertical-reconstruction demo shall run and output the plume-thickness '
+                  'and phase-density AuxVariables (h_plume, rho_n, rho_w) alongside the column '
+                  'geometry, providing the inputs that scripts/ve_reconstruct_vertical.py reads '
+                  'to rebuild the 3D vertical CO2 saturation profile.'
+  []
+[]
