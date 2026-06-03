@@ -30,9 +30,15 @@ protected:
   const VariableName & _pressure_var;
   /// Name of the depth-averaged CO2 saturation primary variable (CO2 mass equation).
   const VariableName & _saturation_var;
+  /// Name of the top-surface elevation z_T aux variable (declared by the action).
+  const VariableName & _z_top;
+  /// Name of the bottom-surface elevation z_B aux variable (declared by the action).
+  const VariableName & _z_bottom;
+  /// Name of the dissolved-CO2 areal-mass aux variable (declared when dissolution is on).
+  const VariableName & _c_diss;
   /// True when eos_reference_depth = interface (rho/mu at the CO2-brine contact).
   const bool _interface_eos;
-  /// True when the convective-dissolution sink kernel should be added.
+  /// True when the convective-dissolution chain (material + aux + sink) should be added.
   const bool _dissolution;
   /// True when the capillary-pressure term and its material(s) should be added.
   const bool _capillary;
@@ -45,9 +51,12 @@ protected:
   void assignSwr(InputParameters & params) const;
 
   /// Add the elemental materials shared by FE and FV: VEPorosity, VEPermeability,
-  /// VESaturation, and the elemental VEFluidProperties (used by the mass-storage
-  /// kernels in both discretizations).
+  /// VESaturation, the elemental VEFluidProperties, and (when dissolution is on) the
+  /// VEDissolution rate material.
   void addCommonMaterials();
+
+  /// Add the VEDissolvedCO2Aux accumulator when dissolution is on (shared FE/FV).
+  virtual void addAuxiliaryKernels() override;
 
 private:
   /// Add the elemental VEFluidProperties material (ve_density / ve_viscosity).

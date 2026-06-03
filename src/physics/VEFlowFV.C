@@ -5,7 +5,9 @@
 
 registerPhysicsBaseTasks("wombatApp", VEFlowFV);
 registerMooseAction("wombatApp", VEFlowFV, "add_variables_physics");
+registerMooseAction("wombatApp", VEFlowFV, "add_aux_variable");
 registerMooseAction("wombatApp", VEFlowFV, "add_fv_kernel");
+registerMooseAction("wombatApp", VEFlowFV, "add_aux_kernel");
 registerMooseAction("wombatApp", VEFlowFV, "add_material");
 registerMooseAction("wombatApp", VEFlowFV, "add_functor_material");
 
@@ -15,9 +17,10 @@ VEFlowFV::validParams()
   InputParameters params = VEFlowPhysicsBase::validParams();
   params.addClassDescription(
       "Vertical-equilibrium two-phase (CO2-brine) flow, discretized with the cell-centered "
-      "finite volume method. Creates the FV primary variables, the FV flow kernels, the "
-      "elemental material chain, and the functor materials. z_top / z_bottom must be FV "
-      "aux variables; SMP full=true stays in the user's [Preconditioning] block.");
+      "finite volume method. Creates the FV primary variables, the geometry (and dissolution) "
+      "aux variables, the FV flow kernels, the elemental material chain, and the functor "
+      "materials. If the user pre-declares z_top / z_bottom they must be MooseVariableFVReal; "
+      "SMP full=true stays in the user's [Preconditioning] block.");
   params.addParam<unsigned short>(
       "ghost_layers", 2, "Number of ghosting layers for distributed parallel runs.");
   params.addParamNamesToGroup("ghost_layers", "Advanced");
@@ -51,30 +54,41 @@ VEFlowFV::addSolverVariables()
 }
 
 void
+VEFlowFV::addAuxiliaryVariables()
+{
+  // Geometry elevations + dissolved-CO2 accumulator as FV (MooseVariableFVReal) aux
+  // variables. The action owns the correct type so the FE-on-FV-face trap cannot arise
+  // for the variables it declares. Declared only if not already provided under these names.
+  std::vector<VariableName> aux_names = {_z_top, _z_bottom};
+  if (_dissolution)
+    aux_names.push_back(_c_diss);
+
+  for (const auto & name : aux_names)
+  {
+    if (!shouldCreateVariable(name, _blocks, /*error_if_aux=*/false))
+      continue;
+    auto params = getFactory().getValidParams("MooseVariableFVReal");
+    assignBlocks(params, _blocks);
+    getProblem().addAuxVariable("MooseVariableFVReal", name, params);
+  }
+}
+
+void
 VEFlowFV::checkGeometryVariablesAreFV() const
 {
-  for (const std::string & p : {std::string("z_top"), std::string("z_bottom")})
-  {
-    const auto names = getParam<std::vector<VariableName>>(p);
-    if (names.empty())
-      paramError(p,
-                 "In the finite-volume VE flow physics, '",
-                 p,
-                 "' must couple to a MooseVariableFVReal AuxVariable (a constant is not "
-                 "allowed): the FV kernels difference its face values to build H and grad(z_T).");
-
-    const auto & name = names[0];
-    if (!getProblem().hasVariable(name))
-      paramError(p, "Coupled geometry variable '", name, "' does not exist.");
-    if (!isVariableFV(name))
-      paramError(p,
-                 "Coupled geometry variable '",
+  // The action declares z_top/z_bottom as FV; this guards the case where the user
+  // pre-declared them under these names as a regular FE variable, which is not
+  // reinitialised on FV faces (reads zero there and silently kills the advective flux).
+  for (const VariableName & name : {_z_top, _z_bottom})
+    if (getProblem().hasVariable(name) && !isVariableFV(name))
+      paramError("z_top",
+                 "Geometry variable '",
                  name,
-                 "' is not a finite-volume variable. In the FV VE flow physics, z_top and "
+                 "' is not a finite-volume variable. In the FV VE flow physics z_top and "
                  "z_bottom must be MooseVariableFVReal: regular FE aux variables are not "
                  "reinitialised on FV faces, so they read as zero at every face and silently "
-                 "kill the advective flux. Declare them with type = MooseVariableFVReal.");
-  }
+                 "kill the advective flux. Either let the action declare them or declare them "
+                 "with type = MooseVariableFVReal.");
 }
 
 void
@@ -83,8 +97,8 @@ VEFlowFV::addFVKernels()
   checkGeometryVariablesAreFV();
 
   const auto & g = getParam<RealVectorValue>("gravity");
-  const VariableName z_top = getParam<std::vector<VariableName>>("z_top")[0];
-  const VariableName z_bottom = getParam<std::vector<VariableName>>("z_bottom")[0];
+  const VariableName & z_top = _z_top;
+  const VariableName & z_bottom = _z_bottom;
 
   // CO2 mass equation (variable = sat_n, phase 0).
   {
@@ -173,8 +187,8 @@ VEFlowFV::addFunctorMaterials()
     if (_interface_eos)
     {
       params.set<MooseFunctorName>("sat_n") = _saturation_var;
-      params.set<MooseFunctorName>("z_top") = getParam<std::vector<VariableName>>("z_top")[0];
-      params.set<MooseFunctorName>("z_bottom") = getParam<std::vector<VariableName>>("z_bottom")[0];
+      params.set<MooseFunctorName>("z_top") = _z_top;
+      params.set<MooseFunctorName>("z_bottom") = _z_bottom;
       params.set<Real>("S_wr") = getParam<Real>("S_wr");
       params.set<RealVectorValue>("gravity") = getParam<RealVectorValue>("gravity");
     }
@@ -191,8 +205,8 @@ VEFlowFV::addFunctorMaterials()
     auto params = getFactory().getValidParams("VEFVCapPressure");
     assignBlocks(params, _blocks);
     params.set<MooseFunctorName>("sat_n") = _saturation_var;
-    params.set<MooseFunctorName>("z_top") = getParam<std::vector<VariableName>>("z_top")[0];
-    params.set<MooseFunctorName>("z_bottom") = getParam<std::vector<VariableName>>("z_bottom")[0];
+    params.set<MooseFunctorName>("z_top") = _z_top;
+    params.set<MooseFunctorName>("z_bottom") = _z_bottom;
     params.set<Real>("pc_entry") = getParam<Real>("pc_entry");
     params.set<RealVectorValue>("gravity") = getParam<RealVectorValue>("gravity");
     assignSwr(params);

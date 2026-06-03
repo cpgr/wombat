@@ -19,6 +19,7 @@ public:
 
 private:
   virtual void addSolverVariables() override;
+  virtual void addAuxiliaryVariables() override;
   virtual void addFEKernels() override;
   virtual void addMaterials() override;
 

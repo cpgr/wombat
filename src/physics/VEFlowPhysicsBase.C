@@ -9,18 +9,28 @@ VEFlowPhysicsBase::validParams()
   InputParameters params = PhysicsBase::validParams();
   params.addClassDescription(
       "Base class for the vertical-equilibrium two-phase (CO2-brine) flow Physics. "
-      "Adds the primary variables, the four depth-integrated flow kernels, and the "
-      "standard VE material chain.");
+      "Adds the two primary variables, the four depth-integrated flow kernels, the standard "
+      "VE material chain, and the geometry / dissolution auxiliary variables. The user "
+      "references the PRIMARY VARIABLE NAMES -- 'pp_top' (pressure) and 'sat_n' (CO2 "
+      "saturation) by default -- when writing BCs, injection wells, ICs and postprocessors; "
+      "rename them with pressure_variable / saturation_variable if needed.");
 
-  // Primary variable names (overridable so several Physics can coexist).
+  // Primary variable names. NOTE: these are the names the user must use for BCs, wells,
+  // ICs and postprocessors -- the action only creates the variables, it does not own the
+  // boundary/well/IC setup (which is model-specific).
   params.addParam<VariableName>(
       "pressure_variable", "pp_top", "Name of the pore-pressure-at-top primary variable.");
   params.addParam<VariableName>(
       "saturation_variable", "sat_n", "Name of the depth-averaged CO2 saturation primary variable.");
 
-  // Geometry (coupled AuxVariables, typically nodal/cell fields from the upscaling mesh).
-  params.addRequiredCoupledVar("z_top", "Top-surface elevation z_T [m].");
-  params.addRequiredCoupledVar("z_bottom", "Bottom-surface elevation z_B [m].");
+  // Geometry. The action DECLARES these aux variables (with the correct type for the
+  // discretization) under the names below if they do not already exist; the user supplies
+  // their values via an IC or by reading them from the mesh. Override a name to point at an
+  // existing field (e.g. an Exodus nodal field), in which case the action skips declaration.
+  params.addParam<VariableName>(
+      "z_top", "z_top", "Name of the top-surface elevation z_T [m] aux variable.");
+  params.addParam<VariableName>(
+      "z_bottom", "z_bottom", "Name of the bottom-surface elevation z_B [m] aux variable.");
 
   // Petrophysics (constant for verification, or coupled fields on real cases).
   params.addRequiredCoupledVar("phi_bar", "Depth-averaged porosity [-].");
@@ -54,11 +64,38 @@ VEFlowPhysicsBase::validParams()
       RealVectorValue(0.0, 0.0, -9.81),
       "Gravity vector [m/s2]. Only the magnitude enters the buoyancy and interface-EOS terms.");
 
+  // Convective dissolution. enable_dissolution = true fully wires it: the action creates
+  // the VEDissolution material, the c_diss dissolved-mass aux variable, the VEDissolvedCO2Aux
+  // accumulator, and the VE*DissolutionSink kernel. dissolution_flux is then REQUIRED.
   params.addParam<bool>(
       "enable_dissolution",
       false,
-      "If true, add the convective-dissolution sink on the CO2 mass equation. Requires a "
-      "VEDissolution material in [Materials] providing ve_dissolution_rate.");
+      "If true, create the full convective-dissolution chain: the VEDissolution material, the "
+      "dissolved-CO2 aux variable + VEDissolvedCO2Aux accumulator, and the sink kernel. "
+      "dissolution_flux is required when this is true.");
+  params.addParam<VariableName>(
+      "dissolved_co2_variable",
+      "c_diss",
+      "Name of the areal dissolved-CO2 mass aux variable [kg/m2] declared when "
+      "enable_dissolution = true.");
+  params.addRangeCheckedParam<Real>(
+      "dissolution_flux",
+      "dissolution_flux >= 0",
+      "Constant-flux convective dissolution rate q0 [kg/m2/s] (VEDissolution). REQUIRED when "
+      "enable_dissolution = true.");
+  params.addRangeCheckedParam<Real>(
+      "dissolution_s_ref",
+      "dissolution_s_ref > 0",
+      "Gate reference CO2 saturation [-] (VEDissolution s_ref). Optional; defaults to the "
+      "material default (0.05) if unset.");
+  params.addRangeCheckedParam<Real>(
+      "dissolution_c_cap",
+      "dissolution_c_cap > 0",
+      "Optional column CO2 capacity [kg/m2] (VEDissolution c_cap); when set, the action wires "
+      "the lagged dissolved_co2 = c_diss so dissolution tapers to zero as c_diss -> c_cap.");
+  params.addParamNamesToGroup("enable_dissolution dissolved_co2_variable dissolution_flux "
+                              "dissolution_s_ref dissolution_c_cap",
+                              "Dissolution");
 
   params.addParam<bool>(
       "capillary",
@@ -76,6 +113,9 @@ VEFlowPhysicsBase::VEFlowPhysicsBase(const InputParameters & parameters)
   : PhysicsBase(parameters),
     _pressure_var(getParam<VariableName>("pressure_variable")),
     _saturation_var(getParam<VariableName>("saturation_variable")),
+    _z_top(getParam<VariableName>("z_top")),
+    _z_bottom(getParam<VariableName>("z_bottom")),
+    _c_diss(getParam<VariableName>("dissolved_co2_variable")),
     _interface_eos(getParam<MooseEnum>("eos_reference_depth") == "interface"),
     _dissolution(getParam<bool>("enable_dissolution")),
     _capillary(getParam<bool>("capillary"))
@@ -85,6 +125,10 @@ VEFlowPhysicsBase::VEFlowPhysicsBase(const InputParameters & parameters)
 
   if (_interface_eos && !isParamValid("S_wr"))
     paramError("S_wr", "S_wr is required when eos_reference_depth = interface.");
+
+  if (_dissolution && !isParamValid("dissolution_flux"))
+    paramError("dissolution_flux",
+               "dissolution_flux is required when enable_dissolution = true.");
 }
 
 void
@@ -139,6 +183,35 @@ VEFlowPhysicsBase::addCommonMaterials()
 
   // Elemental fluid properties (needed by the mass-storage kernels in FE and FV).
   addFluidPropertiesMaterial();
+
+  // Convective-dissolution rate material (shared by FE and FV).
+  if (_dissolution)
+  {
+    auto params = getFactory().getValidParams("VEDissolution");
+    assignBlocks(params, _blocks);
+    params.set<Real>("dissolution_flux") = getParam<Real>("dissolution_flux");
+    if (isParamValid("dissolution_s_ref"))
+      params.set<Real>("s_ref") = getParam<Real>("dissolution_s_ref");
+    if (isParamValid("dissolution_c_cap"))
+    {
+      params.set<Real>("c_cap") = getParam<Real>("dissolution_c_cap");
+      params.set<std::vector<VariableName>>("dissolved_co2") = {_c_diss};
+    }
+    getProblem().addMaterial("VEDissolution", prefix() + "dissolution", params);
+  }
+}
+
+void
+VEFlowPhysicsBase::addAuxiliaryKernels()
+{
+  // Accumulate the areal dissolved-CO2 mass when dissolution is active. The c_diss aux
+  // variable is declared by the derived class (correct type per discretization).
+  if (!_dissolution)
+    return;
+  auto params = getFactory().getValidParams("VEDissolvedCO2Aux");
+  assignBlocks(params, _blocks);
+  params.set<AuxVariableName>("variable") = _c_diss;
+  getProblem().addAuxKernel("VEDissolvedCO2Aux", prefix() + "dissolved_co2", params);
 }
 
 void
@@ -155,8 +228,8 @@ VEFlowPhysicsBase::addFluidPropertiesMaterial()
   if (_interface_eos)
   {
     params.set<std::vector<VariableName>>("sat_n") = {_saturation_var};
-    assignCoupled(params, "z_top");
-    assignCoupled(params, "z_bottom");
+    params.set<std::vector<VariableName>>("z_top") = {_z_top};
+    params.set<std::vector<VariableName>>("z_bottom") = {_z_bottom};
     params.set<Real>("S_wr") = getParam<Real>("S_wr");
     params.set<RealVectorValue>("gravity") = getParam<RealVectorValue>("gravity");
   }

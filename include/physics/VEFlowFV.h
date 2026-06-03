@@ -26,6 +26,7 @@ public:
 
 private:
   virtual void addSolverVariables() override;
+  virtual void addAuxiliaryVariables() override;
   virtual void addFVKernels() override;
   virtual void addMaterials() override;
   virtual void addFunctorMaterials() override;

@@ -95,14 +95,8 @@
   []
 []
 
-[AuxVariables]
-  [z_top]
-    type = MooseVariableFVReal
-  []
-  [z_bottom]
-    type = MooseVariableFVReal
-  []
-[]
+# z_top / z_bottom are declared by the [Physics] action (MooseVariableFVReal); the ICs
+# above set their values. No [AuxVariables] block is needed for the geometry.
 
 [FVBCs]
   [pp_right]

@@ -54,4 +54,67 @@
                   'Jacobian consistent with the PETSc finite-difference approximation to '
                   'within ratio tolerance 1e-7.'
   []
+
+  # --- Option equivalence (generated objects reproduce the hand-written cases) ---
+
+  [ve_flow_dissolution_fe]
+    type = CSVDiff
+    input = 've_flow_dissolution_fe.i'
+    csvdiff = 've_flow_dissolution_fe_csv.csv'
+    rel_err = 1.0e-8
+    requirement = 'The [Physics/VEFlow/FiniteElement] action with enable_dissolution = true '
+                  'shall add VEDissolutionSink on the CO2 equation (the VEDissolution material '
+                  'remaining user-supplied), reproducing the constant-rate dissolution result '
+                  'of dissolution/constant_rate.i.'
+  []
+
+  [ve_flow_dissolution_fv]
+    type = CSVDiff
+    input = 've_flow_dissolution_fv.i'
+    csvdiff = 've_flow_dissolution_fv_csv.csv'
+    rel_err = 1.0e-8
+    requirement = 'The [Physics/VEFlow/FiniteVolume] action with enable_dissolution = true '
+                  'shall add VEFVDissolutionSink, reproducing the constant-rate dissolution '
+                  'result of dissolution/constant_rate_fv.i.'
+  []
+
+  [ve_flow_anisotropic]
+    type = CSVDiff
+    input = 've_flow_anisotropic.i'
+    csvdiff = 've_flow_anisotropic_csv.csv'
+    rel_err = 1.0e-8
+    requirement = 'The [Physics/VEFlow/FiniteElement] action shall forward the off-diagonal '
+                  'K_up_xy into VEPermeability so the manufactured anisotropic solution '
+                  'pp(0.5,0.5) = 9 of permeability/anisotropic_permeability.i is recovered.'
+  []
+
+  # --- Negative tests (the Physics validation guards) ---
+
+  [err_fv_geometry_fe_variable]
+    type = RunException
+    input = 've_flow_fv_bad_geometry.i'
+    expect_err = "Mismatching types.*'z_top'"
+    requirement = 'VEFlowFV shall reject a geometry variable (z_top) pre-declared by the user '
+                  'as a regular FE variable: the action declares z_top as MooseVariableFVReal, '
+                  'so the FE declaration is an inconsistent-type error. This prevents the '
+                  'silent dead-flux trap of an FE aux that reads zero on FV faces.'
+  []
+
+  [err_dissolution_requires_flux]
+    type = RunException
+    input = 've_flow_fe.i'
+    cli_args = 'Physics/VEFlow/FiniteElement/ve/enable_dissolution=true'
+    expect_err = "dissolution_flux is required when enable_dissolution = true"
+    requirement = 'The VE flow Physics shall error if enable_dissolution = true is selected '
+                  'without dissolution_flux.'
+  []
+
+  [err_interface_requires_swr]
+    type = RunException
+    input = 've_flow_fe.i'
+    cli_args = 'Physics/VEFlow/FiniteElement/ve/eos_reference_depth=interface'
+    expect_err = "S_wr is required when eos_reference_depth = interface"
+    requirement = 'The VE flow Physics shall error if eos_reference_depth = interface is '
+                  'selected without S_wr.'
+  []
 []

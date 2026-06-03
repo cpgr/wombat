@@ -100,16 +100,8 @@
   []
 []
 
-[AuxVariables]
-  [z_top]
-    order = FIRST
-    family = LAGRANGE
-  []
-  [z_bottom]
-    order = FIRST
-    family = LAGRANGE
-  []
-[]
+# z_top / z_bottom are declared by the [Physics] action (FE LAGRANGE); the ICs above
+# set their values. No [AuxVariables] block is needed for the geometry.
 
 [BCs]
   [pp_right]
