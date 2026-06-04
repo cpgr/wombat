@@ -1,5 +1,6 @@
 #include "VERelPermTableUO.h"
 #include "DelimitedFileReader.h"
+#include "VECsvColumnLookup.h"
 
 registerMooseObject("wombatApp", VERelPermTableUO);
 
@@ -27,9 +28,12 @@ VERelPermTableUO::validParams()
   // File table (keeps a large upscaled table out of the input file).
   params.addParam<FileName>(
       "data_file",
-      "CSV file with three columns sat_n, kr_n, kr_w (e.g. ve_upscale_curves.py's "
-      "<prefix>_relperm.csv). A header row is auto-detected. Alternative to the inline "
-      "sat_n_points / krn_points / krw_points.");
+      "CSV file with columns for sat_n, the CO2 (non-wetting) relperm and the brine "
+      "(wetting) relperm (e.g. ve_upscale_curves.py's <prefix>_relperm.csv). A header row "
+      "is auto-detected; when present, columns are matched by name "
+      "(sat_n; kr_n_up or kr_n; kr_w_up or kr_w) so their order in the file does not matter. "
+      "Without a header the columns are read positionally as sat_n, kr_n, kr_w. Alternative "
+      "to the inline sat_n_points / krn_points / krw_points.");
 
   return params;
 }
@@ -53,12 +57,32 @@ VERelPermTableUO::VERelPermTableUO(const InputParameters & parameters)
     MooseUtils::DelimitedFileReader reader(getParam<FileName>("data_file"), &_communicator);
     reader.read();
     const auto & cols = reader.getData();
-    if (cols.size() < 3)
-      paramError("data_file",
-                 "expected at least 3 columns (sat_n, kr_n, kr_w) but found ", cols.size(), ".");
-    sat = cols[0];
-    krn = cols[1];
-    krw = cols[2];
+    const auto & names = reader.getNames();
+
+    // If a header is present, match columns by name so the file's column order
+    // does not matter. Otherwise (headerless file) fall back to positional order.
+    const int sat_col = VECsvColumnLookup::findNamedColumn(names, {"sat_n"});
+    const int krn_col = VECsvColumnLookup::findNamedColumn(names, {"kr_n_up", "kr_n"});
+    const int krw_col = VECsvColumnLookup::findNamedColumn(names, {"kr_w_up", "kr_w"});
+    const bool by_name = (sat_col >= 0) && (krn_col >= 0) && (krw_col >= 0);
+
+    if (by_name)
+    {
+      sat = cols[sat_col];
+      krn = cols[krn_col];
+      krw = cols[krw_col];
+    }
+    else
+    {
+      if (cols.size() < 3)
+        paramError("data_file",
+                   "expected at least 3 columns (sat_n, kr_n, kr_w) but found ", cols.size(),
+                   ". Provide a header row naming the columns (sat_n; kr_n_up or kr_n; kr_w_up "
+                   "or kr_w), or supply the three columns in that order without a header.");
+      sat = cols[0];
+      krn = cols[1];
+      krw = cols[2];
+    }
   }
   else
   {

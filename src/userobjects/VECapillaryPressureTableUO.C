@@ -1,5 +1,6 @@
 #include "VECapillaryPressureTableUO.h"
 #include "DelimitedFileReader.h"
+#include "VECsvColumnLookup.h"
 
 #include <algorithm>
 
@@ -29,8 +30,11 @@ VECapillaryPressureTableUO::validParams()
   // File table (keeps a large upscaled table out of the input file).
   params.addParam<FileName>(
       "data_file",
-      "CSV file with two columns Pc, Sw (e.g. ve_upscale_curves.py's <prefix>_pc.csv). A "
-      "header row is auto-detected. Alternative to the inline pc_points / sw_points.");
+      "CSV file with a capillary pressure column and a water-saturation column (e.g. "
+      "ve_upscale_curves.py's <prefix>_pc.csv). A header row is auto-detected; when present, "
+      "columns are matched by name (pc or Pc; sw or Sw) so their order in the file does not "
+      "matter. Without a header the columns are read positionally as Pc, Sw. Alternative to "
+      "the inline pc_points / sw_points.");
 
   // The log extension is designed for parametric curves that diverge at low
   // saturation. A bounded table does not need it and should disable it.
@@ -57,10 +61,29 @@ VECapillaryPressureTableUO::VECapillaryPressureTableUO(const InputParameters & p
     MooseUtils::DelimitedFileReader reader(getParam<FileName>("data_file"), &_communicator);
     reader.read();
     const auto & cols = reader.getData();
-    if (cols.size() < 2)
-      paramError("data_file", "expected at least 2 columns (Pc, Sw) but found ", cols.size(), ".");
-    pc = cols[0];
-    sw = cols[1];
+    const auto & names = reader.getNames();
+
+    // If a header is present, match columns by name so the file's column order
+    // does not matter. Otherwise (headerless file) fall back to positional order.
+    const int pc_col = VECsvColumnLookup::findNamedColumn(names, {"pc", "Pc"});
+    const int sw_col = VECsvColumnLookup::findNamedColumn(names, {"sw", "Sw"});
+    const bool by_name = (pc_col >= 0) && (sw_col >= 0);
+
+    if (by_name)
+    {
+      pc = cols[pc_col];
+      sw = cols[sw_col];
+    }
+    else
+    {
+      if (cols.size() < 2)
+        paramError("data_file",
+                   "expected at least 2 columns (Pc, Sw) but found ", cols.size(),
+                   ". Provide a header row naming the columns (pc or Pc; sw or Sw), or supply "
+                   "the two columns in that order without a header.");
+      pc = cols[0];
+      sw = cols[1];
+    }
   }
   else
   {

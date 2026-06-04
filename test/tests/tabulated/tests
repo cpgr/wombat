@@ -54,4 +54,26 @@
                   '(curves_relperm.csv / curves_pc.csv), reproducing the same sampled kr/ve_h as '
                   'the inline-vector path, so a run needs only the input plus the two CSV files.'
   []
+
+  # --- column-order independence: columns matched by header name, not position ---
+  [reorder_csv]
+    type = RunCommand
+    command = 'python3 reorder_csv.py'
+    requirement = 'The test harness shall emit copies of the committed gold kr/Pc tables with their '
+                  'columns permuted (curves_relperm_reordered.csv, curves_pc_reordered.csv) to set '
+                  'up the column-order-independence read-back test.'
+  []
+
+  [tabulated_uo_csv_reordered]
+    type = CSVDiff
+    input = 'tabulated_uo_csv_reordered.i'
+    csvdiff = 'tabulated_uo_csv_reordered_out.csv'
+    prereq = 'reorder_csv'
+    rel_err = 1.0e-6
+    requirement = 'VERelPermTableUO and VECapillaryPressureTableUO shall match data_file columns by '
+                  'header name rather than position: reading CSVs whose columns are permuted '
+                  '(kr_w_up, sat_n, kr_n_up and sw, pc) shall reproduce the same sampled kr/ve_h as '
+                  'the in-order data_file path, so the column ordering written by an upstream tool '
+                  'does not affect results.'
+  []
 []
