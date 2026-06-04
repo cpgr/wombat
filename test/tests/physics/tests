@@ -129,6 +129,20 @@
                   'pp(0.5,0.5) = 9 of permeability/anisotropic_permeability.i is recovered.'
   []
 
+  [ve_flow_relperm_table]
+    type = CSVDiff
+    input = 've_flow_relperm_table.i'
+    csvdiff = 've_flow_relperm_table_csv.csv'
+    cli_args = 'Executioner/end_time=5000'
+    rel_err = 1.0e-5
+    requirement = 'The [Physics/VEFlow/FiniteElement] action shall wire a tabulated '
+                  'VERelPermTableUO (relperm_uo) into the generated VERelPerm material so that a '
+                  'table sampling the analytical sharp-interface curve (kr_n = sat_n, kr_w = 1 - '
+                  'sat_n) reproduces the hand-assembled buckley_leverett/bl_flat_table.i '
+                  'Buckley-Leverett result, confirming the field-case tabulated relperm plugs '
+                  'into the Physics path with no other change.'
+  []
+
   # --- Negative tests (the Physics validation guards) ---
 
   [ve_flow_fv_user_geometry]
