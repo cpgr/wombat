@@ -68,6 +68,10 @@ import sys
 
 import numpy as np
 
+# np.trapz was deprecated in NumPy 2.0 and renamed np.trapezoid (which does not
+# exist on NumPy < 2.0). Use whichever the installed version provides.
+_trapezoid = getattr(np, "trapezoid", None) or np.trapz
+
 
 # ----------------------------------------------------------------------------------
 # Fine-scale capillary-pressure curves: each provides sw_of_pc(pc) and pc_of_sw(sw)
@@ -228,8 +232,8 @@ def upscale(args, pc_curve, kr_curve, k_prof, phi_prof):
 
     # Column-total weights (denominators), evaluated once on a fine full-column grid.
     d_full = np.linspace(0.0, H, nq)
-    k_denom = np.trapz(k_prof(d_full), d_full)
-    phi_denom = np.trapz(phi_prof(d_full), d_full)
+    k_denom = _trapezoid(k_prof(d_full), d_full)
+    phi_denom = _trapezoid(phi_prof(d_full), d_full)
 
     hs = np.linspace(0.0, H, args.n_points)
     sat_n = np.zeros_like(hs)
@@ -254,11 +258,11 @@ def upscale(args, pc_curve, kr_curve, k_prof, phi_prof):
             sw = pc_curve.sw_of_pc(pc)
 
         sn = 1.0 - sw
-        sat_n[i] = np.trapz(phi * sn, d) / phi_denom
-        kr_n_up[i] = np.trapz(k * kr_curve.krn(sw), d) / k_denom
+        sat_n[i] = _trapezoid(phi * sn, d) / phi_denom
+        kr_n_up[i] = _trapezoid(k * kr_curve.krn(sw), d) / k_denom
         # Brine: mobile in the plume (at sw) AND fully saturated below it (kr_w(1)).
-        k_below = k_denom - np.trapz(k_prof(d), d)
-        kr_w_up[i] = (np.trapz(k * kr_curve.krw(sw), d) + kr_curve.krw(1.0) * k_below) / k_denom
+        k_below = k_denom - _trapezoid(k_prof(d), d)
+        kr_w_up[i] = (_trapezoid(k * kr_curve.krw(sw), d) + kr_curve.krw(1.0) * k_below) / k_denom
 
     # VERelPermTableUO needs strictly increasing sat_n. sat_n(h) is monotone; guard
     # against tiny non-monotone steps from quadrature noise by keeping a strict subset.
