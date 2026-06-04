@@ -28,7 +28,7 @@ with delta_rho = rho_w - rho_n.  The fringe form is exactly the integrand of
 VEPlumeReconstruction::satNBar -- here it is evaluated pointwise instead of integrated,
 so no Newton inversion is needed (the model already computed h).  Sw(Pc) is supplied
 either as a table (recommended: export the same curve the run used, e.g. the
-VECapillaryPressureTable CSV) or as analytic van Genuchten.
+VECapillaryPressureTableUO CSV) or as analytic van Genuchten.
 
 The density contrast is taken from the TWO phase-density fields (rho_n, rho_w) rather
 than a precomputed delta_rho, so the 2D file stays self-documenting -- a user inspecting
@@ -83,7 +83,7 @@ Exodus = _import_exodus()
 class SwTable:
     """Piecewise-linear Sw(Pc) from a 2-column CSV (Pc[Pa], Sw[-]), Pc ascending.
 
-    Mirrors VECapillaryPressureTable: export the same curve the run consumed for an
+    Mirrors VECapillaryPressureTableUO: export the same curve the run consumed for an
     exact reconstruction.
     """
 

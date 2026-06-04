@@ -1,11 +1,11 @@
-#include "VECapillaryPressureTable.h"
+#include "VECapillaryPressureTableUO.h"
 
 #include <algorithm>
 
-registerMooseObject("wombatApp", VECapillaryPressureTable);
+registerMooseObject("wombatApp", VECapillaryPressureTableUO);
 
 InputParameters
-VECapillaryPressureTable::validParams()
+VECapillaryPressureTableUO::validParams()
 {
   InputParameters params = PorousFlowCapillaryPressure::validParams();
   params.addClassDescription(
@@ -30,7 +30,7 @@ VECapillaryPressureTable::validParams()
   return params;
 }
 
-VECapillaryPressureTable::VECapillaryPressureTable(const InputParameters & parameters)
+VECapillaryPressureTableUO::VECapillaryPressureTableUO(const InputParameters & parameters)
   : PorousFlowCapillaryPressure(parameters)
 {
   const auto & pc = getParam<std::vector<Real>>("pc_points");
@@ -64,38 +64,38 @@ VECapillaryPressureTable::VECapillaryPressureTable(const InputParameters & param
 }
 
 Real
-VECapillaryPressureTable::effectiveSaturation(Real pc, unsigned /*qp*/) const
+VECapillaryPressureTableUO::effectiveSaturation(Real pc, unsigned /*qp*/) const
 {
   return effectiveSaturationFromSaturation(_pc_to_sw.sample(pc));
 }
 
 Real
-VECapillaryPressureTable::dEffectiveSaturation(Real pc, unsigned /*qp*/) const
+VECapillaryPressureTableUO::dEffectiveSaturation(Real pc, unsigned /*qp*/) const
 {
   // dSe/dPc = (dSw/dPc) * _dseff_ds   where _dseff_ds = 1 / (1 - sat_lr)
   return _pc_to_sw.sampleDerivative(pc) * _dseff_ds;
 }
 
 Real
-VECapillaryPressureTable::d2EffectiveSaturation(Real /*pc*/, unsigned /*qp*/) const
+VECapillaryPressureTableUO::d2EffectiveSaturation(Real /*pc*/, unsigned /*qp*/) const
 {
   return 0.0; // piecewise-linear interpolant has zero second derivative
 }
 
 Real
-VECapillaryPressureTable::capillaryPressureCurve(Real saturation, unsigned /*qp*/) const
+VECapillaryPressureTableUO::capillaryPressureCurve(Real saturation, unsigned /*qp*/) const
 {
   return _sw_to_pc.sample(saturation);
 }
 
 Real
-VECapillaryPressureTable::dCapillaryPressureCurve(Real saturation, unsigned /*qp*/) const
+VECapillaryPressureTableUO::dCapillaryPressureCurve(Real saturation, unsigned /*qp*/) const
 {
   return _sw_to_pc.sampleDerivative(saturation);
 }
 
 Real
-VECapillaryPressureTable::d2CapillaryPressureCurve(Real /*saturation*/, unsigned /*qp*/) const
+VECapillaryPressureTableUO::d2CapillaryPressureCurve(Real /*saturation*/, unsigned /*qp*/) const
 {
   return 0.0; // piecewise-linear interpolant has zero second derivative
 }

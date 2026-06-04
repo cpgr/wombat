@@ -8,7 +8,7 @@
  *
  * Abstract base class for VE upscaled relative-permeability models, exposed as a
  * swappable UserObject (the same pattern as PorousFlowCapillaryPressure /
- * VECapillaryPressureTable for capillary pressure).
+ * VECapillaryPressureTableUO for capillary pressure).
  *
  * A model implements the relative permeability and its derivative as functions
  * of the depth-averaged CO2 saturation, returning plain Real (value + derivative,

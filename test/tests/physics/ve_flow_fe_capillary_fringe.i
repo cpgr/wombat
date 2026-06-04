@@ -52,7 +52,7 @@
   [ve_pc_table]
     # Linear Sw(Pc): Sw = 1 - 0.8 * Pc / 62784, sat_lr = 0.2. dSw/dPc is exact
     # (piecewise constant), so the fringe Jacobian matches FD to 1e-7.
-    type = VECapillaryPressureTable
+    type = VECapillaryPressureTableUO
     sat_lr = 0.2
     pc_points = '0  15696  31392  47088  62784'
     sw_points = '1.0  0.8  0.6  0.4  0.2'

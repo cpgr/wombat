@@ -125,7 +125,7 @@ VEFlowPhysicsBase::validParams()
   params.addParam<UserObjectName>(
       "pc_uo",
       "PorousFlowCapillaryPressure UserObject defining the upscaled column Sw(Pc) curve "
-      "(e.g. VECapillaryPressureTable). Required when capillary = capillary_fringe; supplied to "
+      "(e.g. VECapillaryPressureTableUO). Required when capillary = capillary_fringe; supplied to "
       "VEPlumeReconstruction and the cap-pressure material so they share one curve.");
   params.addParamNamesToGroup("capillary pc_entry pc_uo", "Capillary pressure");
 
@@ -161,7 +161,7 @@ VEFlowPhysicsBase::VEFlowPhysicsBase(const InputParameters & parameters)
     paramError("pc_uo",
                "pc_uo is required when capillary = capillary_fringe: the fringe plume "
                "reconstruction and the upscaled Pc^up coefficients both need the column Sw(Pc) "
-               "curve (e.g. a VECapillaryPressureTable). Supply pc_uo, or use "
+               "curve (e.g. a VECapillaryPressureTableUO). Supply pc_uo, or use "
                "capillary = sharp_interface.");
 }
 

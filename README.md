@@ -72,7 +72,7 @@ primitives — PorousFlow itself is not forked.
 | **Geometry / petrophysics** | `VEGeometry` (H, z_T, grad z_T, grad H), `VEPorosity`, `VEPermeability` (anisotropic `K_up`) |
 | **Plume reconstruction** | `VEPlumeReconstruction` (sharp-interface closed form; capillary-fringe Newton inversion, Nordbotten & Dahle 2011) |
 | **Relative permeability** | swappable `VERelativePermeability` user objects — `VERelPermSharpUO` (analytical), `VERelPermTableUO` (tabulated/upscaled), `VERelPermHysteresisUO` (Land/Killough); FE/FV adapters `VERelPerm`/`VEFVRelPerm` |
-| **Capillary pressure** | `VEUpscaledCapPressure` / `VEFVCapPressure` (two-pressure VE), `VECapillaryPressureTable` |
+| **Capillary pressure** | `VEUpscaledCapPressure` / `VEFVCapPressure` (two-pressure VE), `VECapillaryPressureTableUO` |
 | **Fluids** | `VEFluidProperties` (density/viscosity from any `SinglePhaseFluidProperties` UO via `fp_nw`/`fp_w`) driven by `ConstantFluidProperties` (verification) or `CO2FluidProperties`/`BrineFluidProperties` (full P/T EOS) |
 | **Wells & boundaries** | `ConstantPointSource` Dirac wells (FE + FV), `VEFVAdvectiveOutflowBC` (open up-dip outflow), standard Neumann/Dirichlet flux BCs |
 | **Trapping & dissolution** | residual (hysteretic) trapping via `VESaturationMaxAux` + `VERelPermHysteresisUO`; convective dissolution via `VEDissolution` + `VEDissolutionSink`/`VEFVDissolutionSink` |

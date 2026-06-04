@@ -1,5 +1,5 @@
 [Tests]
-  design = 'VEPlumeReconstruction.md VECapillaryPressureTable.md'
+  design = 'VEPlumeReconstruction.md VECapillaryPressureTableUO.md'
   issues = '#1'
 
   [ve_plume_recon_sharp]

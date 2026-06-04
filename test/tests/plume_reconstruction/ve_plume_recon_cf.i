@@ -1,5 +1,5 @@
 # Unit test for VEPlumeReconstruction in capillary_fringe mode with
-# VECapillaryPressureTable.
+# VECapillaryPressureTableUO.
 #
 # Flat formation: z_top = 0, z_bottom = -20 m, H = 20 m.
 # Uniform sat_n = 0.1, uniform pp_top = 1e7 Pa.  Dirichlet BCs match ICs.
@@ -46,7 +46,7 @@
 
 [UserObjects]
   [ve_pc_table]
-    type = VECapillaryPressureTable
+    type = VECapillaryPressureTableUO
     sat_lr = 0.2
     pc_points = '0  15696  31392  47088  62784'
     sw_points = '1.0  0.8  0.6  0.4  0.2'

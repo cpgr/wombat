@@ -30,7 +30,7 @@ clearly different profile, so this verifies the fringe S_n(h) factor (sign AND
 magnitude), which the linear-table no-flow equilibrium (sat_n*H = const, shared
 by both models) cannot.
 
-The Sw(Pc) table MUST match the VECapillaryPressureTable in mcwhorter_fringe_fe.i.
+The Sw(Pc) table MUST match the VECapillaryPressureTableUO in mcwhorter_fringe_fe.i.
 Run from this directory:  python3 mcwhorter_fringe_reference.py
 """
 
@@ -47,7 +47,7 @@ rho_n = 700.0      # CO2 density [kg/m^3]
 rho_w = 1000.0     # brine density [kg/m^3]
 delta_rho = rho_w - rho_n
 
-# Linear Sw(Pc) table (must equal the VECapillaryPressureTable in the .i).
+# Linear Sw(Pc) table (must equal the VECapillaryPressureTableUO in the .i).
 PC_POINTS = np.array([0.0, 15696.0, 31392.0, 47088.0, 62784.0])
 SW_POINTS = np.array([1.0, 0.8, 0.6, 0.4, 0.2])
 

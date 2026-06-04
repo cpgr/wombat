@@ -37,7 +37,7 @@
     krw_max = 1.0
   []
   [ve_pc_table]
-    type = VECapillaryPressureTable
+    type = VECapillaryPressureTableUO
     sat_lr = 0.2
     pc_points = '0  15696  31392  47088  62784'
     sw_points = '1.0  0.8  0.6  0.4  0.2'

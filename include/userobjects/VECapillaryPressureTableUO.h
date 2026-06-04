@@ -4,7 +4,7 @@
 #include "LinearInterpolation.h"
 
 /**
- * VECapillaryPressureTable
+ * VECapillaryPressureTableUO
  *
  * A PorousFlowCapillaryPressure UserObject backed by a piecewise-linear lookup
  * table of (Pc, Sw) pairs. Intended as the production-use companion to
@@ -20,7 +20,7 @@
  * VEPlumeReconstruction without forcing the data through a parametric fit that
  * may not represent the multi-facies column well.
  *
- * Different material blocks can reference different VECapillaryPressureTable
+ * Different material blocks can reference different VECapillaryPressureTableUO
  * UOs to represent lateral variation in the facies sequence across the domain.
  *
  * Input
@@ -44,11 +44,11 @@
  * Set log_extension = false (the base-class logarithmic low-saturation
  * extension is not meaningful for a table with a finite lower Sw bound).
  */
-class VECapillaryPressureTable : public PorousFlowCapillaryPressure
+class VECapillaryPressureTableUO : public PorousFlowCapillaryPressure
 {
 public:
   static InputParameters validParams();
-  VECapillaryPressureTable(const InputParameters & parameters);
+  VECapillaryPressureTableUO(const InputParameters & parameters);
 
   virtual Real effectiveSaturation(Real pc, unsigned qp = 0) const override;
   virtual Real dEffectiveSaturation(Real pc, unsigned qp = 0) const override;
