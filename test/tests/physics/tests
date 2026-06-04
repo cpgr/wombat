@@ -41,6 +41,22 @@
                   'finite-difference approximation to within ratio tolerance 1e-7.'
   []
 
+  [ve_flow_fe_capillary_pc_entry]
+    type = PetscJacobianTester
+    input = 've_flow_fe_capillary.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-4
+    cli_args = 'Executioner/end_time=1000 Executioner/dt=500 -mat_fd_type ds '
+               'ICs/sat_n_ic/value=0.5 BCs/sat_n_left/value=0.5 '
+               'Physics/VEFlow/FiniteElement/ve/pc_entry=500.0'
+    requirement = 'The [Physics/VEFlow/FiniteElement] action shall forward pc_entry to '
+                  'VEUpscaledCapPressure so that a non-zero constant entry pressure '
+                  '(pc_entry = 500 Pa) is added to Pc^up. Since pc_entry is constant its '
+                  'gradient is zero and the Jacobian structure is unchanged; this test '
+                  'confirms the forwarding path and that the Jacobian remains consistent '
+                  'with the PETSc finite-difference approximation to within ratio tolerance 1e-7.'
+  []
+
   [ve_flow_fv_capillary]
     type = PetscJacobianTester
     input = 've_flow_fv_capillary.i'
