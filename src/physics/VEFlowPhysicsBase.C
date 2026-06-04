@@ -109,14 +109,25 @@ VEFlowPhysicsBase::validParams()
                               "dissolution_s_ref dissolution_c_cap",
                               "Dissolution");
 
-  params.addParam<bool>(
+  MooseEnum capillary_modes("none sharp_interface capillary_fringe", "none");
+  params.addParam<MooseEnum>(
       "capillary",
-      false,
-      "If true, add the upscaled capillary-pressure term grad(Pc^up) to the CO2 Darcy "
-      "potential (two-pressure VE) and create the cap-pressure material(s) that supply it. "
-      "Sharp interface: Pc^up = (rho_w - rho_n)*|g|*sat_n*H/(1 - S_wr) + pc_entry.");
+      capillary_modes,
+      "Capillary-pressure model for the CO2 phase (two-pressure VE). 'none' (default): no "
+      "grad(Pc^up) term. 'sharp_interface': add grad(Pc^up) = delta_rho*|g|*grad(h) to the CO2 "
+      "Darcy potential with the sharp-interface thickness h = sat_n*H/(1 - S_wr). "
+      "'capillary_fringe': same drive, but h is the Newton-inverted column equilibrium "
+      "(Nordbotten & Dahle 2011) using the pc_uo Sw(Pc) table -- supply pc_uo. Both create the "
+      "cap-pressure material(s) (FE: VEPlumeReconstruction + VEUpscaledCapPressure; "
+      "FV: VEFVCapPressure).");
   params.addParam<Real>(
-      "pc_entry", 0.0, "Capillary entry/fringe pressure offset [Pa] (used when capillary = true).");
+      "pc_entry", 0.0, "Capillary entry/fringe pressure offset [Pa] (used when capillary != none).");
+  params.addParam<UserObjectName>(
+      "pc_uo",
+      "PorousFlowCapillaryPressure UserObject defining the upscaled column Sw(Pc) curve "
+      "(e.g. VECapillaryPressureTable). Required when capillary = capillary_fringe; supplied to "
+      "VEPlumeReconstruction and the cap-pressure material so they share one curve.");
+  params.addParamNamesToGroup("capillary pc_entry pc_uo", "Capillary pressure");
 
   return params;
 }
@@ -131,7 +142,8 @@ VEFlowPhysicsBase::VEFlowPhysicsBase(const InputParameters & parameters)
     _define_geometry_variables(getParam<bool>("define_geometry_variables")),
     _interface_eos(getParam<MooseEnum>("eos_reference_depth") == "interface"),
     _dissolution(getParam<bool>("enable_dissolution")),
-    _capillary(getParam<bool>("capillary"))
+    _capillary(getParam<MooseEnum>("capillary") != "none"),
+    _capillary_fringe(getParam<MooseEnum>("capillary") == "capillary_fringe")
 {
   saveSolverVariableName(_pressure_var);
   saveSolverVariableName(_saturation_var);
@@ -142,6 +154,15 @@ VEFlowPhysicsBase::VEFlowPhysicsBase(const InputParameters & parameters)
   if (_dissolution && !isParamValid("dissolution_flux"))
     paramError("dissolution_flux",
                "dissolution_flux is required when enable_dissolution = true.");
+
+  // capillary_fringe drives VEPlumeReconstruction's Newton inversion and the
+  // fringe S_n(h) cap-pressure coefficients off a shared upscaled Sw(Pc) table.
+  if (_capillary_fringe && !isParamValid("pc_uo"))
+    paramError("pc_uo",
+               "pc_uo is required when capillary = capillary_fringe: the fringe plume "
+               "reconstruction and the upscaled Pc^up coefficients both need the column Sw(Pc) "
+               "curve (e.g. a VECapillaryPressureTable). Supply pc_uo, or use "
+               "capillary = sharp_interface.");
 }
 
 void
@@ -163,6 +184,16 @@ VEFlowPhysicsBase::assignSwr(InputParameters & params) const
 {
   if (isParamValid("S_wr"))
     params.set<Real>("S_wr") = getParam<Real>("S_wr");
+}
+
+void
+VEFlowPhysicsBase::assignCapillaryMode(InputParameters & params) const
+{
+  // Mirror the Physics capillary mode onto a downstream cap-pressure / plume
+  // material, threading pc_uo in fringe mode (validated present in the ctor).
+  params.set<MooseEnum>("mode") = _capillary_fringe ? "capillary_fringe" : "sharp_interface";
+  if (_capillary_fringe)
+    params.set<UserObjectName>("pc_uo") = getParam<UserObjectName>("pc_uo");
 }
 
 void

@@ -168,16 +168,19 @@ VEFlowFE::addMaterials()
     getProblem().addMaterial("VERelPerm", prefix() + "relperm", params);
   }
 
-  // Capillary-pressure chain (capillary = true): VEPlumeReconstruction supplies the
-  // sharp-interface plume thickness ve_h that VEUpscaledCapPressure differentiates
-  // into the ve_dPcup_dsatn / ve_dPcup_dH coefficients consumed by VEAdvectiveFluxS.
+  // Capillary-pressure chain (capillary != none): VEPlumeReconstruction supplies the
+  // plume thickness ve_h that VEUpscaledCapPressure differentiates into the
+  // ve_dPcup_dsatn / ve_dPcup_dH coefficients consumed by VEAdvectiveFluxS. In
+  // capillary_fringe mode both materials share the pc_uo Sw(Pc) table.
   if (_capillary)
   {
     {
       auto params = getFactory().getValidParams("VEPlumeReconstruction");
       assignBlocks(params, _blocks);
       params.set<std::vector<VariableName>>("sat_n") = {_saturation_var};
-      assignSwr(params); // sharp_interface mode is the default
+      params.set<RealVectorValue>("gravity") = getParam<RealVectorValue>("gravity");
+      assignSwr(params);
+      assignCapillaryMode(params);
       getProblem().addMaterial("VEPlumeReconstruction", prefix() + "plume_recon", params);
     }
     {
@@ -186,6 +189,9 @@ VEFlowFE::addMaterials()
       params.set<RealVectorValue>("gravity") = getParam<RealVectorValue>("gravity");
       params.set<Real>("pc_entry") = getParam<Real>("pc_entry");
       assignSwr(params);
+      assignCapillaryMode(params);
+      if (_capillary_fringe)
+        params.set<std::vector<VariableName>>("sat_n") = {_saturation_var};
       getProblem().addMaterial("VEUpscaledCapPressure", prefix() + "cap_pressure", params);
     }
   }

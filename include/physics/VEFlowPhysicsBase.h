@@ -44,6 +44,9 @@ protected:
   const bool _dissolution;
   /// True when the capillary-pressure term and its material(s) should be added.
   const bool _capillary;
+  /// True when capillary = capillary_fringe (Newton-inverted column equilibrium);
+  /// false for sharp_interface. Only meaningful when _capillary is true.
+  const bool _capillary_fringe;
 
   /// Forward a coupled-var-or-constant Physics parameter to a downstream object.
   void assignCoupled(InputParameters & params, const std::string & name) const;
@@ -51,6 +54,11 @@ protected:
   /// Forward S_wr to a downstream object only if the user set it (else the object
   /// keeps its own default). Shared by the interface-EOS and capillary materials.
   void assignSwr(InputParameters & params) const;
+
+  /// Set mode (sharp_interface / capillary_fringe) on a downstream capillary
+  /// material's params, plus pc_uo when in fringe mode. Shared by the FE
+  /// (VEPlumeReconstruction, VEUpscaledCapPressure) and FV (VEFVCapPressure) wiring.
+  void assignCapillaryMode(InputParameters & params) const;
 
   /// Add the elemental materials shared by FE and FV: VEPorosity, VEPermeability,
   /// VESaturation, the elemental VEFluidProperties, and (when dissolution is on) the

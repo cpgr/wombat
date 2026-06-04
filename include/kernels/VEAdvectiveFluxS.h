@@ -37,7 +37,11 @@ protected:
   const bool _capillary;
 
   /// d(Pc^up)/d(sat_n) [Pa] from VEUpscaledCapPressure; null when capillary=false.
-  const MaterialProperty<Real> * const _dPcup_dsatn;
+  /// AD: in sharp_interface mode it is constant in sat_n (zero derivative -> the
+  /// grad(sat_n) Jacobian rides on _grad_u alone, as before); in capillary_fringe
+  /// mode it depends on sat_n through S_n(h), and its AD derivative makes the
+  /// grad(sat_n) term's Jacobian exact.
+  const ADMaterialProperty<Real> * const _dPcup_dsatn;
 
   /// d(Pc^up)/d(H) [Pa/m] from VEUpscaledCapPressure; null when capillary=false.
   /// AD so the grad(H) term's sat_n Jacobian is captured (grad(H) is fixed geometry).

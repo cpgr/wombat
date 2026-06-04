@@ -35,7 +35,7 @@ VEAdvectiveFluxS::VEAdvectiveFluxS(const InputParameters & parameters)
   : VEAdvectiveFluxBase(parameters),
     _grad_pp_top(adCoupledGradient("pp_top")),
     _capillary(getParam<bool>("capillary")),
-    _dPcup_dsatn(_capillary ? &getMaterialProperty<Real>("ve_dPcup_dsatn") : nullptr),
+    _dPcup_dsatn(_capillary ? &getADMaterialProperty<Real>("ve_dPcup_dsatn") : nullptr),
     _dPcup_dH(_capillary ? &getADMaterialProperty<Real>("ve_dPcup_dH") : nullptr),
     _grad_H(_capillary ? &getMaterialProperty<RealGradient>("ve_grad_H") : nullptr)
 {
@@ -56,9 +56,11 @@ VEAdvectiveFluxS::precomputeQpResidual()
   if (_capillary)
   {
     // grad(Pc^up) = d(Pc^up)/d(sat_n) * grad(sat_n) + d(Pc^up)/d(H) * grad(H).
-    // The first term's sat_n Jacobian rides on the AD variable gradient _grad_u;
-    // the second uses the fixed-geometry ve_grad_H, so its sat_n Jacobian must
-    // come from the AD coefficient _dPcup_dH. Together they reconstruct the full
+    // Both coefficients are AD: the first term's sat_n Jacobian rides on the AD
+    // variable gradient _grad_u and (in capillary_fringe mode, where the coefficient
+    // varies with sat_n through S_n(h)) on _dPcup_dsatn's own AD derivative; the
+    // second uses the fixed-geometry ve_grad_H, so its sat_n Jacobian must come from
+    // the AD coefficient _dPcup_dH. Together they reconstruct the full
     // delta_rho*g*grad(h) capillary drive for laterally varying thickness.
     potential_gradient += (*_dPcup_dsatn)[_qp] * _grad_u[_qp];
     potential_gradient += (*_dPcup_dH)[_qp] * (*_grad_H)[_qp];

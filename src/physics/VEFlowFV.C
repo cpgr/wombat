@@ -196,11 +196,11 @@ VEFlowFV::addFunctorMaterials()
     getProblem().addFunctorMaterial("VEFVFluidProperties", prefix() + "fv_fluid_props", params);
   }
 
-  // Capillary-pressure functors (capillary = true). delta_rho = rho_w - rho_n is read
+  // Capillary-pressure functors (capillary != none). delta_rho = rho_w - rho_n is read
   // from the ve_density_n / ve_density_w functors above (the defaults of density_nw /
-  // density_w), so no separate density input is needed; VEFVCapPressure computes the
-  // sharp-interface h internally, so -- unlike the FE side -- no VEPlumeReconstruction
-  // is required.
+  // density_w), so no separate density input is needed; VEFVCapPressure computes h
+  // internally (sharp closed form, or capillary_fringe Newton inversion with pc_uo), so
+  // -- unlike the FE side -- no VEPlumeReconstruction is required.
   if (_capillary)
   {
     auto params = getFactory().getValidParams("VEFVCapPressure");
@@ -211,6 +211,7 @@ VEFlowFV::addFunctorMaterials()
     params.set<Real>("pc_entry") = getParam<Real>("pc_entry");
     params.set<RealVectorValue>("gravity") = getParam<RealVectorValue>("gravity");
     assignSwr(params);
+    assignCapillaryMode(params);
     getProblem().addFunctorMaterial("VEFVCapPressure", prefix() + "cap_pressure", params);
   }
 }

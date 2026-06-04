@@ -35,7 +35,7 @@
     difference_tol = 1.0e-4
     cli_args = 'Executioner/end_time=1000 Executioner/dt=500 -mat_fd_type ds '
                'ICs/sat_n_ic/value=0.5 BCs/sat_n_left/value=0.5'
-    requirement = 'The [Physics/VEFlow/FiniteElement] action with capillary = true shall '
+    requirement = 'The [Physics/VEFlow/FiniteElement] action with capillary = sharp_interface shall '
                   'create VEPlumeReconstruction and VEUpscaledCapPressure and set capillary '
                   'on VEAdvectiveFluxS, producing a Jacobian consistent with the PETSc '
                   'finite-difference approximation to within ratio tolerance 1e-7.'
@@ -48,11 +48,38 @@
     difference_tol = 1.0e-4
     cli_args = 'Executioner/end_time=1000 Executioner/dt=500 -mat_fd_type ds '
                'ICs/sat_n_ic/value=0.5 FVBCs/sat_n_left/value=0.5'
-    requirement = 'The [Physics/VEFlow/FiniteVolume] action with capillary = true shall '
+    requirement = 'The [Physics/VEFlow/FiniteVolume] action with capillary = sharp_interface shall '
                   'create the VEFVCapPressure functor material (deriving delta_rho from the '
                   'density functors) and set capillary on VEFVAdvectiveFlux, producing a '
                   'Jacobian consistent with the PETSc finite-difference approximation to '
                   'within ratio tolerance 1e-7.'
+  []
+
+  [ve_flow_fe_capillary_fringe]
+    type = PetscJacobianTester
+    input = 've_flow_fe_capillary_fringe.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-4
+    cli_args = '-mat_fd_type ds'
+    requirement = 'The [Physics/VEFlow/FiniteElement] action with capillary = capillary_fringe '
+                  'shall run VEPlumeReconstruction and VEUpscaledCapPressure in Newton-inversion '
+                  'mode against the shared pc_uo Sw(Pc) table, producing the fringe S_n(h) flux '
+                  'coefficients with a Jacobian consistent with the PETSc finite-difference '
+                  'approximation to within ratio tolerance 1e-7 at a non-uniform interior state '
+                  '(both the grad(sat_n) and grad(H) fringe terms active).'
+  []
+
+  [ve_flow_fv_capillary_fringe]
+    type = PetscJacobianTester
+    input = 've_flow_fv_capillary_fringe.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-3
+    cli_args = '-mat_fd_type ds'
+    requirement = 'The [Physics/VEFlow/FiniteVolume] action with capillary = capillary_fringe '
+                  'shall build VEFVCapPressure in Newton-inversion mode against the shared pc_uo '
+                  'Sw(Pc) table, producing the fringe S_n(h) flux coefficients with a Jacobian '
+                  'consistent with the PETSc finite-difference approximation to within ratio '
+                  'tolerance 1e-7.'
   []
 
   # --- Option equivalence (generated objects reproduce the hand-written cases) ---
@@ -139,6 +166,16 @@
                   'variables), the VE flow Physics shall error if the user also declares '
                   'z_top/z_bottom in [AuxVariables], rather than silently merging or emitting an '
                   'opaque type-mismatch error.'
+  []
+
+  [err_capillary_fringe_requires_pc_uo]
+    type = RunException
+    input = 've_flow_fe.i'
+    cli_args = 'Physics/VEFlow/FiniteElement/ve/capillary=capillary_fringe'
+    expect_err = "pc_uo is required when capillary = capillary_fringe"
+    requirement = 'The VE flow Physics shall error if capillary = capillary_fringe is selected '
+                  'without pc_uo, since the fringe reconstruction and upscaled-Pc coefficients '
+                  'both need the column Sw(Pc) curve.'
   []
 
   [err_missing_field]

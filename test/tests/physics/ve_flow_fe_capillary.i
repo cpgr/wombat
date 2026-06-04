@@ -1,7 +1,7 @@
-# VE flow [Physics] -- FE, capillary = true.
+# VE flow [Physics] -- FE, capillary = sharp_interface.
 #
 # Physics-generated counterpart of bl_flat_capillary_fe.i. The single
-# capillary = true flag makes the FE physics set capillary on VEAdvectiveFluxS
+# capillary = sharp_interface flag makes the FE physics set capillary on VEAdvectiveFluxS
 # AND create the VEPlumeReconstruction + VEUpscaledCapPressure materials that
 # supply ve_dPcup_dsatn / ve_dPcup_dH. Verified by PetscJacobianTester (tests
 # spec): the AD Jacobian of the generated capillary-diffusion term must match FD.
@@ -46,7 +46,7 @@
     fp_nw = co2_fp
     fp_w = brine_fp
     relperm_uo = relperm_uo
-    capillary = true
+    capillary = sharp_interface
     S_wr = 0.0
     define_geometry_variables = false # z_top/z_bottom declared in [AuxVariables] below
   []
