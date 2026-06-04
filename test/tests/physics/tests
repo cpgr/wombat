@@ -96,6 +96,51 @@
                   'tolerance 1e-7.'
   []
 
+  [ve_flow_eos_jacobian]
+    type = PetscJacobianTester
+    input = 've_flow_eos_jacobian.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-2
+    cli_args = '-mat_fd_type ds'
+    requirement = 'The [Physics/VEFlow/FiniteVolume] action with CO2FluidProperties (non-wetting) '
+                  'and SimpleBrineFluidProperties (wetting) shall generate VEFVFluidProperties and '
+                  'VEFluidProperties materials that produce a Jacobian consistent with the PETSc '
+                  'finite-difference approximation (eos_reference_depth = top_surface), confirming '
+                  'd(rho)/d(pp_top) and d(mu)/d(pp_top) are seeded correctly through the '
+                  'face evaluation in the Physics-generated FV kernels.'
+  []
+
+  [ve_flow_eos_interface_fe]
+    type = PetscJacobianTester
+    input = 've_flow_eos_interface_fe.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-2
+    cli_args = '-mat_fd_type ds'
+    requirement = 'The [Physics/VEFlow/FiniteElement] action with eos_reference_depth = interface '
+                  'and S_wr shall wire VEFluidProperties to evaluate the EOS at the CO2-brine '
+                  'contact z_T + h, producing a Jacobian consistent with the PETSc '
+                  'finite-difference approximation and confirming that d(rho)/d(pp_top) and '
+                  'd(rho)/d(sat_n) (through h = sat_n*H/(1-S_wr)) are seeded correctly into the '
+                  'Physics-generated FE storage and flux kernels. SimpleFluidProperties is used '
+                  'to avoid the |g|*h EOS-inconsistency amplification (HANDOVER Gotcha D).'
+  []
+
+  [ve_flow_eos_interface_fv]
+    type = PetscJacobianTester
+    input = 've_flow_eos_interface_fv.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-2
+    cli_args = '-mat_fd_type ds'
+    requirement = 'The [Physics/VEFlow/FiniteVolume] action with eos_reference_depth = interface '
+                  'and S_wr shall wire both VEFVFluidProperties (flux) and VEFluidProperties '
+                  '(storage) to evaluate density/viscosity at the interface pressure, producing a '
+                  'Jacobian consistent with the PETSc finite-difference approximation and '
+                  'confirming that d(rho)/d(sat_n) (through h) is seeded correctly through both '
+                  'the central-difference face evaluation in VEFVAdvectiveFlux and the '
+                  'heavily-weighted mass-storage term. SimpleFluidProperties avoids the |g|*h '
+                  'EOS-inconsistency amplification (HANDOVER Gotcha D).'
+  []
+
   # --- Option equivalence (generated objects reproduce the hand-written cases) ---
 
   [ve_flow_dissolution_fe]
