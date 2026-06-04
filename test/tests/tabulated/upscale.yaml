@@ -1,0 +1,25 @@
+# Config consumed by the ve_upscale_curves.py regression tests (see tests spec).
+out_prefix: curves
+mode: fringe
+
+column:
+  thickness: 20.0
+  rho_n: 700.0
+  rho_w: 1000.0
+  swr: 0.2
+
+capillary:
+  pc: vg
+  vg_alpha: 5.0e-4
+  vg_m: 0.5
+
+relperm:
+  kr: corey
+  krn_max: 1.0
+  krw_max: 1.0
+  corey_nn: 2.0
+  corey_nw: 2.0
+
+sampling:
+  n_points: 20
+  n_quad: 400

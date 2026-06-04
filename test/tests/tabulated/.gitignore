@@ -1,0 +1,3 @@
+# Run artifacts from the script-regression / config tests (gold/ is committed;
+# generated *.csv are covered by the repo-root .gitignore).
+*_upscaled.i

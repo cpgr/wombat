@@ -1,0 +1,45 @@
+[Tests]
+  design = 'VERelPermTableUO.md VECapillaryPressureTableUO.md'
+  issues = '#1'
+
+  # --- ve_upscale_curves.py preprocessing script (no MOOSE app needed) ---
+  # runcheck.py drives the script and compares with numpy (exit non-zero on
+  # mismatch); it runs in this directory and regenerates curves_upscaled.i, which
+  # the tabulated_uo read-back test (below) then consumes.
+
+  [script_regression]
+    type = RunCommand
+    command = 'python3 runcheck.py regression'
+    requirement = 'The ve_upscale_curves.py upscaling utility shall reproduce the committed '
+                  'depth-integrated kr/Pc tables (gold/curves_relperm.csv, gold/curves_pc.csv) '
+                  'from upscale.yaml, guarding the script against regressions.'
+  []
+
+  [script_config_equals_cli]
+    type = RunCommand
+    command = 'python3 runcheck.py equivalence'
+    requirement = 've_upscale_curves.py shall produce identical tables whether the options are '
+                  'supplied via a --config YAML file or the equivalent command-line flags.'
+  []
+
+  [script_cli_overrides_config]
+    type = RunCommand
+    command = 'python3 runcheck.py override'
+    requirement = 've_upscale_curves.py shall let a command-line flag override the value of the '
+                  'same option given in --config (CLI wins), changing the output accordingly.'
+  []
+
+  # --- wombat table-reading UserObjects against the script output ---
+  [tabulated_uo]
+    type = CSVDiff
+    input = 'tabulated_uo.i'
+    csvdiff = 'tabulated_uo.csv'
+    prereq = 'script_regression'
+    rel_err = 1.0e-6
+    requirement = 'VERelPermTableUO and VECapillaryPressureTableUO shall ingest the [UserObjects] '
+                  'block emitted by ve_upscale_curves.py (curves_upscaled.i) and read/interpolate '
+                  'the tables correctly: sampled kr_n/kr_w (via VERelPerm) and ve_h (via '
+                  'VEPlumeReconstruction in capillary_fringe) at sat_n = 0.1..0.6 shall match the '
+                  'independent numpy reference, proving both the values and the table format.'
+  []
+[]
