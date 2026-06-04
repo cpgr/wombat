@@ -58,11 +58,31 @@ python scripts/ve_upscale_curves.py --out-prefix field \
 python scripts/ve_upscale_curves.py -h   # all options
 ```
 
-Outputs `<prefix>_upscaled.i` (a `[UserObjects]` block with `VERelPermTableUO` and -- in
-fringe mode -- `VECapillaryPressureTableUO`, ready to `!include` or paste) plus
-`<prefix>_relperm.csv` and `<prefix>_pc.csv` for inspection/plotting. The emitted tables
-satisfy the UOs' monotonicity requirements by construction (`sat_n` strictly increasing,
-`pc` increasing from 0, `sw` strictly decreasing, `sat_lr = swr <= min(sw)`).
+Outputs `<prefix>_relperm.csv`, `<prefix>_pc.csv`, and `<prefix>_upscaled.i` (a
+`[UserObjects]` block with `VERelPermTableUO` and -- in fringe mode --
+`VECapillaryPressureTableUO`). Two ways to consume them in a model:
+
+- **`!include <prefix>_upscaled.i`** (or paste the block) -- the table values are inline in
+  the input, so the run is self-contained in one file. Best for verification / archival.
+- **`data_file`** -- point the UOs straight at the CSVs, keeping a large table out of the
+  input (the run is then the input plus the two CSVs):
+  ```
+  [UserObjects]
+    [relperm_uo]
+      type = VERelPermTableUO
+      data_file = sleipner_relperm.csv   # columns sat_n, kr_n, kr_w
+    []
+    [pc_uo]
+      type = VECapillaryPressureTableUO
+      data_file = sleipner_pc.csv         # columns Pc, Sw
+      sat_lr = 0.2
+    []
+  []
+  ```
+
+The emitted tables satisfy the UOs' monotonicity requirements by construction (`sat_n`
+strictly increasing, `pc` increasing from 0, `sw` strictly decreasing,
+`sat_lr = swr <= min(sw)`).
 
 ### Notes
 

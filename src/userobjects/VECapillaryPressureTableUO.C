@@ -1,4 +1,5 @@
 #include "VECapillaryPressureTableUO.h"
+#include "DelimitedFileReader.h"
 
 #include <algorithm>
 
@@ -11,17 +12,25 @@ VECapillaryPressureTableUO::validParams()
   params.addClassDescription(
       "Piecewise-linear capillary pressure UserObject backed by a (Pc, Sw) lookup table. "
       "Intended for use with VEPlumeReconstruction on real field models where the "
-      "upscaling workflow supplies a column-averaged Sw(Pc) table that encodes all "
-      "vertical facies heterogeneity. Use log_extension = false.");
+      "upscaling workflow (ve_upscale_curves.py) supplies a column-averaged Sw(Pc) table. "
+      "Supply the table EITHER inline via pc_points / sw_points OR from a CSV with data_file "
+      "(columns Pc, Sw). Use log_extension = false.");
 
-  params.addRequiredParam<std::vector<Real>>(
+  // Inline table (self-contained input). Optional: omit when using data_file.
+  params.addParam<std::vector<Real>>(
       "pc_points",
       "Capillary pressure values [Pa], strictly increasing from 0, defining the "
-      "x-axis of the Pc-Sw table (output from the upscaling workflow).");
-  params.addRequiredParam<std::vector<Real>>(
+      "x-axis of the Pc-Sw table. Inline alternative to data_file.");
+  params.addParam<std::vector<Real>>(
       "sw_points",
       "True water saturation values [-], strictly decreasing, in one-to-one "
-      "correspondence with pc_points (output from the upscaling workflow).");
+      "correspondence with pc_points.");
+
+  // File table (keeps a large upscaled table out of the input file).
+  params.addParam<FileName>(
+      "data_file",
+      "CSV file with two columns Pc, Sw (e.g. ve_upscale_curves.py's <prefix>_pc.csv). A "
+      "header row is auto-detected. Alternative to the inline pc_points / sw_points.");
 
   // The log extension is designed for parametric curves that diverge at low
   // saturation. A bounded table does not need it and should disable it.
@@ -33,27 +42,56 @@ VECapillaryPressureTableUO::validParams()
 VECapillaryPressureTableUO::VECapillaryPressureTableUO(const InputParameters & parameters)
   : PorousFlowCapillaryPressure(parameters)
 {
-  const auto & pc = getParam<std::vector<Real>>("pc_points");
-  const auto & sw = getParam<std::vector<Real>>("sw_points");
+  std::vector<Real> pc, sw;
+
+  const bool from_file = isParamValid("data_file");
+  const bool from_inline = isParamValid("pc_points") || isParamValid("sw_points");
+
+  if (from_file == from_inline)
+    mooseError("VECapillaryPressureTableUO '", name(),
+               "': supply EITHER data_file (a CSV with columns Pc, Sw) OR the inline pc_points / "
+               "sw_points vectors -- not both, and not neither.");
+
+  if (from_file)
+  {
+    MooseUtils::DelimitedFileReader reader(getParam<FileName>("data_file"), &_communicator);
+    reader.read();
+    const auto & cols = reader.getData();
+    if (cols.size() < 2)
+      paramError("data_file", "expected at least 2 columns (Pc, Sw) but found ", cols.size(), ".");
+    pc = cols[0];
+    sw = cols[1];
+  }
+  else
+  {
+    if (!isParamValid("pc_points") || !isParamValid("sw_points"))
+      mooseError("VECapillaryPressureTableUO '", name(),
+                 "': pc_points and sw_points must both be given together (or use data_file).");
+    pc = getParam<std::vector<Real>>("pc_points");
+    sw = getParam<std::vector<Real>>("sw_points");
+  }
 
   if (pc.size() < 2)
-    paramError("pc_points", "At least two points are required.");
+    mooseError("VECapillaryPressureTableUO '", name(), "': at least two table points are required.");
   if (sw.size() != pc.size())
-    paramError("sw_points", "sw_points and pc_points must have the same length.");
+    mooseError("VECapillaryPressureTableUO '", name(),
+               "': the Pc and Sw columns must have the same length.");
 
   for (std::size_t i = 1; i < pc.size(); ++i)
     if (pc[i] <= pc[i - 1])
-      paramError("pc_points", "Values must be strictly increasing.");
+      mooseError("VECapillaryPressureTableUO '", name(),
+                 "': the Pc column must be strictly increasing.");
   for (std::size_t i = 1; i < sw.size(); ++i)
     if (sw[i] >= sw[i - 1])
-      paramError("sw_points", "Values must be strictly decreasing.");
+      mooseError("VECapillaryPressureTableUO '", name(),
+                 "': the Sw column must be strictly decreasing.");
 
   if (pc.front() < 0.0)
-    paramError("pc_points", "Capillary pressure values must be non-negative.");
+    mooseError("VECapillaryPressureTableUO '", name(), "': Pc values must be non-negative.");
   if (sw.back() < _sat_lr)
-    paramError("sw_points",
-               "Minimum Sw in the table is below sat_lr. "
-               "Ensure the table covers down to the residual water saturation.");
+    mooseError("VECapillaryPressureTableUO '", name(),
+               "': the minimum Sw in the table (", sw.back(), ") is below sat_lr (", _sat_lr,
+               "). Ensure the table covers down to the residual water saturation.");
 
   _pc_to_sw.setData(pc, sw);
 

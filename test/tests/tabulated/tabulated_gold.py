@@ -78,11 +78,14 @@ for t, s in enumerate(SAT_N, start=1):
                  float(np.interp(s, satn_tbl, krw_tbl)),
                  ve_h(s)))
 
-out = os.path.join(HERE, "gold", "tabulated_uo_out.csv")
-with open(out, "w") as f:
-    f.write("time,krn,krw,ve_h\n")
-    for r in rows:
-        f.write(f"{r[0]:.6f},{r[1]:.12e},{r[2]:.12e},{r[3]:.12e}\n")
-print("wrote", out)
+# tabulated_uo.i (inline / !include) and tabulated_uo_csv.i (data_file) sample the
+# same data, so they share these gold values under their two output names.
+for fname in ("tabulated_uo_out.csv", "tabulated_uo_csv_out.csv"):
+    out = os.path.join(HERE, "gold", fname)
+    with open(out, "w") as f:
+        f.write("time,krn,krw,ve_h\n")
+        for r in rows:
+            f.write(f"{r[0]:.6f},{r[1]:.12e},{r[2]:.12e},{r[3]:.12e}\n")
+    print("wrote", out)
 for r in rows:
     print(f"  t={r[0]:.0f} sat_n={0.1*r[0]:.1f}  krn={r[1]:.5f} krw={r[2]:.5f} ve_h={r[3]:.4f}")

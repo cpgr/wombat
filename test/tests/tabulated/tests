@@ -42,4 +42,16 @@
                   'VEPlumeReconstruction in capillary_fringe) at sat_n = 0.1..0.6 shall match the '
                   'independent numpy reference, proving both the values and the table format.'
   []
+
+  [tabulated_uo_csv]
+    type = CSVDiff
+    input = 'tabulated_uo_csv.i'
+    csvdiff = 'tabulated_uo_csv_out.csv'
+    prereq = 'script_regression'
+    rel_err = 1.0e-6
+    requirement = 'VERelPermTableUO and VECapillaryPressureTableUO shall read their tables '
+                  'directly from the ve_upscale_curves.py CSV output via the data_file parameter '
+                  '(curves_relperm.csv / curves_pc.csv), reproducing the same sampled kr/ve_h as '
+                  'the inline-vector path, so a run needs only the input plus the two CSV files.'
+  []
 []
