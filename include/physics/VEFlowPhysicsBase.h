@@ -70,6 +70,10 @@ protected:
   /// (for the buoyancy gradient); FV requires a MooseVariableFVReal.
   virtual void checkGeometryVariableType(const VariableName & var_name) const = 0;
 
+  /// When define_geometry_variables = true, error if the user has also declared z_top/z_bottom
+  /// in [AuxVariables] (a conflicting double declaration). Detected from the ActionWarehouse.
+  void checkGeometryNotUserDeclared() const;
+
 private:
   /// Add the elemental VEFluidProperties material (ve_density / ve_viscosity).
   void addFluidPropertiesMaterial();

@@ -130,6 +130,17 @@
                   'selected without S_wr.'
   []
 
+  [err_geometry_double_declared]
+    type = RunException
+    input = 've_flow_fv.i'
+    cli_args = 'AuxVariables/z_top/type=MooseVariableFVReal'
+    expect_err = "z_top' has already been declared.*define_geometry_variables = true"
+    requirement = 'With define_geometry_variables = true (the action owns the geometry '
+                  'variables), the VE flow Physics shall error if the user also declares '
+                  'z_top/z_bottom in [AuxVariables], rather than silently merging or emitting an '
+                  'opaque type-mismatch error.'
+  []
+
   [err_missing_field]
     type = RunException
     input = 've_flow_fe.i'

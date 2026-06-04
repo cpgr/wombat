@@ -54,6 +54,8 @@ VEFlowFE::addAuxiliaryVariables()
   // needed for the buoyancy drive). Skipped entirely when define_geometry_variables = false
   // (the user provides z_top / z_bottom, e.g. from the mesh).
   if (_define_geometry_variables)
+  {
+    checkGeometryNotUserDeclared();
     for (const auto & name : {_z_top, _z_bottom})
     {
       auto params = getFactory().getValidParams("MooseVariable");
@@ -62,6 +64,7 @@ VEFlowFE::addAuxiliaryVariables()
       params.set<MooseEnum>("family") = "LAGRANGE";
       getProblem().addAuxVariable("MooseVariable", name, params);
     }
+  }
 
   // Dissolved-CO2 accumulator: elemental (CONSTANT MONOMIAL) because VEDissolvedCO2Aux
   // reads the qp material property ve_dissolution_rate.

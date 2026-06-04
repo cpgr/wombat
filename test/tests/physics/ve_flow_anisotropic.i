@@ -56,6 +56,7 @@
     fp_w = brine_fp
     relperm_uo = relperm_uo
     variable_order = SECOND
+    define_geometry_variables = false # z_top/z_bottom declared in [AuxVariables] below
   []
 []
 

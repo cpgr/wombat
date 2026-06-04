@@ -63,6 +63,7 @@ VEFlowFV::addAuxiliaryVariables()
   std::vector<VariableName> aux_names;
   if (_define_geometry_variables)
   {
+    checkGeometryNotUserDeclared();
     aux_names.push_back(_z_top);
     aux_names.push_back(_z_bottom);
   }

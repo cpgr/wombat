@@ -48,6 +48,7 @@
     relperm_uo = relperm_uo
     capillary = true
     S_wr = 0.0
+    define_geometry_variables = false # z_top/z_bottom declared in [AuxVariables] below
   []
 []
 

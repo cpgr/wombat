@@ -3,6 +3,7 @@
 
 #include "VEFlowPhysicsBase.h"
 #include "MooseUtils.h"
+#include "AddAuxVariableAction.h"
 
 InputParameters
 VEFlowPhysicsBase::validParams()
@@ -272,6 +273,29 @@ VEFlowPhysicsBase::addCommonMaterials()
     }
     getProblem().addMaterial("VEDissolution", prefix() + "dissolution", params);
   }
+}
+
+void
+VEFlowPhysicsBase::checkGeometryNotUserDeclared() const
+{
+  // With define_geometry_variables = true the action owns z_top/z_bottom; a user [AuxVariables]
+  // declaration of the same name is a conflict (it would otherwise silently merge if the types
+  // match, or trip an opaque "Mismatching types" error if not). Detect it reliably from the
+  // ActionWarehouse (populated at parse time, independent of action execution order) and give a
+  // clear message pointing at the fix.
+  const auto & aux_actions = _awh.getActions<AddAuxVariableAction>();
+  for (const auto & vn : {_z_top, _z_bottom})
+    for (const auto * aux_action : aux_actions)
+      if (aux_action->name() == vn)
+        paramError("define_geometry_variables",
+                   "AuxVariable '",
+                   vn,
+                   "' has already been declared in [AuxVariables], but this physics also "
+                   "declares it because define_geometry_variables = true. Remove the "
+                   "[AuxVariables/",
+                   vn,
+                   "] block, or set define_geometry_variables = false to provide the geometry "
+                   "variables yourself.");
 }
 
 void
