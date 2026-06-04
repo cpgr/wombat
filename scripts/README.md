@@ -1,5 +1,68 @@
 # wombat scripts
 
+## ve_upscale_curves.py -- functional (kr/Pc) upscaling over the thickness
+
+The VE solver consumes DEPTH-INTEGRATED relative permeability `kr^up(sat_n)` and an
+upscaled column `Sw(Pc)` curve. The geometry/petrophysics upscaling that builds the 2D
+mesh handles `H`, `phi_bar`, `K_up`; this script handles the *functional* part -- it
+turns fine-scale (vertically resolved) rock `kr(s)` / `Pc(s)` curves into the tables
+`VERelPermTableUO` and `VECapillaryPressureTableUO` read. Preprocessing, like
+`ve_reconstruct_vertical.py`; not part of the solve.
+
+For each plume height `h` it integrates the capillary-fringe VE equilibrium profile over
+the column (depth `d` from the top, contact at `h`, `Pc(d) = delta_rho*g*(h-d)`,
+`Sw = Sw(Pc)`), `k`/`phi`-weighted:
+
+    sat_n(h)   = int_0^h phi (1 - Sw) dd / int_0^H phi dd
+    kr_n^up(h) = int_0^H k kr_n(Sw) dd / int_0^H k dd     (kr_n = 0 below the plume)
+    kr_w^up(h) = int_0^H k kr_w(Sw) dd / int_0^H k dd
+
+Sweeping `h` over `[0, H]` traces `kr_n^up`, `kr_w^up` vs `sat_n`. `--mode sharp` uses the
+box profile `S_n = 1 - swr` (reproduces `VERelPermSharpUO` on a uniform column; still
+non-trivial with a layered `k(d)`). The emitted `Sw(Pc)` table is the fine-scale rock
+curve -- feed the same `pc_uo` to `VEPlumeReconstruction` so the in-solve reconstruction
+matches the curve the `kr^up` table was built from.
+
+Fine-scale curves: parametric van Genuchten (`--pc vg`, matching
+`PorousFlowCapillaryPressureVG`) or Brooks-Corey (`--pc bc`) Pc; Corey relperm
+(`--kr corey`); or tables (`--pc-table Pc,Sw`, `--kr-table Sw,krw,krn`). Vertical
+heterogeneity via optional `--k-profile`/`--phi-profile` CSVs (`depth_below_top, value`);
+default uniform.
+
+Pure `numpy` (no MOOSE / SEACAS), so it runs in any environment:
+
+```
+# van Genuchten Pc + Corey relperm, uniform 30 m column
+python scripts/ve_upscale_curves.py --out-prefix sleipner \
+    --thickness 30 --rho-n 700 --rho-w 1000 \
+    --pc vg --vg-alpha 5e-4 --vg-m 0.5 --swr 0.2 \
+    --kr corey --krn-max 1 --krw-max 1 --corey-nn 2 --corey-nw 2
+
+# real-field facies tables + a layered permeability profile
+python scripts/ve_upscale_curves.py --out-prefix field \
+    --thickness 50 --rho-n 650 --rho-w 1020 \
+    --pc table --pc-table rock_pc.csv --kr table --kr-table rock_kr.csv \
+    --k-profile k_of_depth.csv --swr 0.15
+
+python scripts/ve_upscale_curves.py -h   # all options
+```
+
+Outputs `<prefix>_upscaled.i` (a `[UserObjects]` block with `VERelPermTableUO` and -- in
+fringe mode -- `VECapillaryPressureTableUO`, ready to `!include` or paste) plus
+`<prefix>_relperm.csv` and `<prefix>_pc.csv` for inspection/plotting. The emitted tables
+satisfy the UOs' monotonicity requirements by construction (`sat_n` strictly increasing,
+`pc` increasing from 0, `sw` strictly decreasing, `sat_lr = swr <= min(sw)`).
+
+### Notes
+
+- The `kr^up` table is indexed by `sat_n`, so it stays consistent with the solve regardless
+  of `phi(d)`; the `phi`-weighting only sets the (pore-volume) `sat_n <-> h` mapping, which
+  is exactly the average the `sat_n` variable represents.
+- Multi-facies (different rock curves stacked vertically) is a defined next step; v1 is a
+  single rock curve with optional layered `k(d)`/`phi(d)`. For a multi-facies column the
+  effective `Sw(Pc)` is only approximate (CLAUDE.md key-subtlety 9).
+- `--mode sharp` emits no Pc table (the sharp reconstruction needs no `pc_uo`).
+
 ## ve_reconstruct_vertical.py -- 3D vertical saturation reconstruction
 
 The VE solver runs on a 2D mesh (the formation top surface) and tracks the plume only
