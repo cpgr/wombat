@@ -29,7 +29,18 @@ Fine-scale curves: parametric van Genuchten (`--pc vg`, matching
 heterogeneity via optional `--k-profile`/`--phi-profile` CSVs (`depth_below_top, value`);
 default uniform.
 
-Pure `numpy` (no MOOSE / SEACAS), so it runs in any environment:
+Pure `numpy` (no MOOSE / SEACAS), so it runs in any environment. Options can come
+from a YAML config (`--config`, needs PyYAML) or the command line; **CLI flags
+override config**, so a base config + a one-off override is the usual workflow:
+
+```
+python scripts/ve_upscale_curves.py --config scripts/ve_upscale_example.yaml
+python scripts/ve_upscale_curves.py --config my_field.yaml --n-points 30
+```
+
+The config groups the options under `column:` / `capillary:` / `relperm:` /
+`sampling:` (organisational only -- keys match the long option names); see
+`scripts/ve_upscale_example.yaml`. Or give everything on the command line:
 
 ```
 # van Genuchten Pc + Corey relperm, uniform 30 m column

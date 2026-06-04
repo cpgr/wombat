@@ -42,6 +42,11 @@ OUTPUT
 
 USAGE
 -----
+  # all options from a YAML config (see ve_upscale_example.yaml); CLI overrides it
+  python ve_upscale_curves.py --config my_field.yaml
+  python ve_upscale_curves.py --config my_field.yaml --n-points 30   # override one
+
+  # or entirely on the command line:
   # van Genuchten Pc + Corey relperm, uniform column
   python ve_upscale_curves.py --out-prefix sleipner \\
       --thickness 30 --rho-n 700 --rho-w 1000 \\
@@ -394,19 +399,69 @@ def build_curves(args):
     return pc_curve, kr_curve
 
 
+def load_config(path, parser):
+    """Read a YAML config into a flat {dest: value} dict for parser.set_defaults.
+
+    The top-level sections (column / relperm / capillary / sampling / ...) are
+    purely organisational -- their entries are flattened. Keys may use '-' or '_'
+    and must match an option dest; values are coerced with the option's type
+    (so '5e-4', which PyYAML would otherwise keep as a string, becomes a float)
+    and checked against any 'choices'."""
+    try:
+        import yaml
+    except ImportError:
+        sys.exit("error: --config requires PyYAML (conda install pyyaml / pip install pyyaml)")
+    try:
+        with open(path) as fh:
+            raw = yaml.safe_load(fh)
+    except Exception as exc:  # noqa: BLE001
+        sys.exit(f"error: cannot read --config '{path}': {exc}")
+    if not isinstance(raw, dict):
+        sys.exit(f"error: --config '{path}' must be a YAML mapping (key: value)")
+
+    actions = {a.dest: a for a in parser._actions if a.dest not in ("help", "config")}
+    flat = {}
+
+    def add(key, value):
+        dest = str(key).replace("-", "_")
+        if dest not in actions:
+            sys.exit(f"error: --config: unknown key '{key}'")
+        act = actions[dest]
+        if value is not None and act.type is not None:
+            try:
+                value = act.type(value)
+            except (TypeError, ValueError):
+                sys.exit(f"error: --config: bad value for '{key}': {value!r}")
+        if value is not None and act.choices is not None and value not in act.choices:
+            sys.exit(f"error: --config: '{key}' must be one of {list(act.choices)}")
+        flat[dest] = value
+
+    for key, value in raw.items():
+        if isinstance(value, dict):          # a section: flatten its entries
+            for sub_key, sub_value in value.items():
+                add(sub_key, sub_value)
+        else:
+            add(key, value)
+    return flat
+
+
 def main():
     p = argparse.ArgumentParser(
         description="Upscale fine-scale rock kr/Pc curves into VE depth-integrated "
-                    "VERelPermTableUO / VECapillaryPressureTableUO tables.",
+                    "VERelPermTableUO / VECapillaryPressureTableUO tables. Options may be "
+                    "given on the command line or in a YAML --config (CLI overrides config); "
+                    "see scripts/ve_upscale_example.yaml.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    p.add_argument("--out-prefix", required=True,
+    p.add_argument("--config",
+                   help="YAML config file; its values become defaults that CLI flags override")
+    p.add_argument("--out-prefix",
                    help="output file prefix (<prefix>_upscaled.i, _relperm.csv, _pc.csv)")
     p.add_argument("--mode", choices=["fringe", "sharp"], default="fringe",
                    help="vertical saturation model integrated over the column")
 
     g = p.add_argument_group("column")
-    g.add_argument("--thickness", type=float, required=True, help="formation thickness H [m]")
+    g.add_argument("--thickness", type=float, help="formation thickness H [m]")
     g.add_argument("--rho-n", type=float, default=700.0, help="CO2 density [kg/m3]")
     g.add_argument("--rho-w", type=float, default=1000.0, help="brine density [kg/m3]")
     g.add_argument("--gravity", type=float, default=9.81, help="|g| [m/s2]")
@@ -440,11 +495,23 @@ def main():
     g.add_argument("--n-quad", type=int, default=400,
                    help="vertical quadrature points per column integral")
 
+    # Resolve --config early (a tiny throwaway parser), fold it into the option
+    # defaults, then parse the real command line so explicit CLI flags win.
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument("--config")
+    cfg_path = pre.parse_known_args()[0].config
+    if cfg_path:
+        p.set_defaults(**load_config(cfg_path, p))
     args = p.parse_args()
+
+    # thickness / out_prefix are required but may come from either source.
+    for name, val in (("thickness", args.thickness), ("out-prefix", args.out_prefix)):
+        if val is None:
+            sys.exit(f"error: --{name} is required (set it on the command line or in --config)")
     if args.swr < 0 or args.swr >= 1:
-        sys.exit("error: --swr must be in [0, 1)")
+        sys.exit("error: swr must be in [0, 1)")
     if args.n_points < 3:
-        sys.exit("error: --n-points must be >= 3")
+        sys.exit("error: n_points must be >= 3")
 
     pc_curve, kr_curve = build_curves(args)
     k_prof = Profile1D(args.k_profile, "--k-profile")

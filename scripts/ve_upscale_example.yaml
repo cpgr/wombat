@@ -1,0 +1,41 @@
+# Example config for ve_upscale_curves.py
+#   python ve_upscale_curves.py --config ve_upscale_example.yaml
+#
+# Every value can be overridden on the command line (CLI wins), e.g.
+#   python ve_upscale_curves.py --config ve_upscale_example.yaml --n-points 30
+#
+# The section names (column / capillary / relperm / sampling) are organisational
+# only -- entries are flattened. Keys match the long option names (with - or _).
+
+out_prefix: sleipner
+mode: fringe              # fringe | sharp
+
+column:
+  thickness: 30.0         # formation thickness H [m]   (required)
+  rho_n: 700.0            # CO2 density [kg/m3]
+  rho_w: 1000.0           # brine density [kg/m3]
+  gravity: 9.81           # |g| [m/s2]
+  swr: 0.2                # residual water saturation [-]
+  snr: 0.0                # residual CO2 saturation [-] (Corey relperm only)
+  # k_profile: k_of_depth.csv       # CSV depth_below_top[m],k[-]    (default uniform)
+  # phi_profile: phi_of_depth.csv   # CSV depth_below_top[m],phi[-]
+
+capillary:
+  pc: vg                  # vg | bc | table
+  vg_alpha: 5.0e-4        # van Genuchten alpha [1/Pa]
+  vg_m: 0.5               # van Genuchten m in (0,1)
+  # bc_pd: 5000.0         # Brooks-Corey entry pressure pd [Pa]  (with pc: bc)
+  # bc_lambda: 2.0        # Brooks-Corey pore-size index lambda
+  # pc_table: rock_pc.csv          # CSV Pc[Pa],Sw[-]            (with pc: table)
+
+relperm:
+  kr: corey               # corey | table
+  krn_max: 1.0            # CO2 endpoint kr [-]
+  krw_max: 1.0            # brine endpoint kr [-]
+  corey_nn: 2.0           # CO2 Corey exponent
+  corey_nw: 2.0           # brine Corey exponent
+  # kr_table: rock_kr.csv          # CSV Sw[-],krw[-],krn[-]     (with kr: table)
+
+sampling:
+  n_points: 50            # table points (saturation / Pc samples)
+  n_quad: 400             # vertical quadrature points per column integral
