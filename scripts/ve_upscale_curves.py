@@ -294,15 +294,22 @@ def pc_table(args, pc_curve):
             sw = np.concatenate(([1.0], sw))
         return pc, sw
 
-    # Parametric: sample Sw uniformly in (swr, 1) and invert to Pc(Sw). This makes
-    # sw strictly decreasing and pc strictly increasing by construction (and skips
-    # any Brooks-Corey entry-pressure plateau cleanly via the single Pc=0 point).
-    sw = np.linspace(1.0 - 1e-6, args.swr + 1e-6, args.n_points - 1)
+    # Parametric: sample Sw uniformly from 1 down to Sw(pc_max) and invert to Pc(Sw).
+    # Capping at Sw(pc_max) -- NOT swr -- keeps every point inside [0, pc_max] (the
+    # only range the column ever sees) and lands the last point exactly on the full
+    # buoyancy head; sampling to swr instead would send low-Sw points past pc_max,
+    # where clamping/dedup would drop them and leave the high-Pc end unresolved.
+    # Uniform-in-Sw naturally clusters Pc near 0, where Sw(Pc) is steepest. Pc=0 is
+    # anchored (Sw=1); a Brooks-Corey entry-pressure plateau collapses to that point.
+    sw_end = float(pc_curve.sw_of_pc(np.array([pc_max]))[0])
+    sw = np.linspace(1.0, sw_end, args.n_points)
     pc = pc_curve.pc_of_sw(sw)
-    pc = np.minimum(pc, pc_max)
-    # Prepend the (Pc=0, Sw=1) anchor and drop any points that collapse onto it.
-    pc = np.concatenate(([0.0], pc))
-    sw = np.concatenate(([1.0], sw))
+    if pc[0] > 1e-9:  # Brooks-Corey: pc_of_sw(1) = pd > 0 -> add the Pc=0 anchor
+        pc = np.concatenate(([0.0], pc))
+        sw = np.concatenate(([1.0], sw))
+    else:
+        pc[0] = 0.0
+    # Drop any points that collapse (strict monotonicity for VECapillaryPressureTableUO).
     keep = [0]
     for i in range(1, len(pc)):
         if pc[i] > pc[keep[-1]] + 1e-9 and sw[i] < sw[keep[-1]] - 1e-9:
