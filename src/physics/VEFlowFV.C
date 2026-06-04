@@ -23,6 +23,18 @@ VEFlowFV::validParams()
       "SMP full=true stays in the user's [Preconditioning] block.");
   params.addParam<unsigned short>(
       "ghost_layers", 2, "Number of ghosting layers for distributed parallel runs.");
+
+  MooseEnum advected_interp_method("average upwind vanLeer min_mod sou quick venkatakrishnan",
+                                   "upwind");
+  params.addParam<MooseEnum>(
+      "advected_interp_method",
+      advected_interp_method,
+      "Face interpolation for the advected relative permeability in the FV flux (forwarded to "
+      "both VEFVAdvectiveFlux kernels). 'upwind' (default) is first-order; 'average' is "
+      "unstabilised central (verification only -- it is also the differentiable choice at "
+      "no-flow / zero-velocity states, where the upwind switch is a Jacobian kink); the rest "
+      "are second-order TVD limiters that sharpen the plume front (transient only).");
+
   params.addParamNamesToGroup("ghost_layers", "Advanced");
   return params;
 }
@@ -120,6 +132,7 @@ VEFlowFV::addFVKernels()
     params.set<MooseFunctorName>("z_top") = z_top;
     params.set<MooseFunctorName>("z_bottom") = z_bottom;
     params.set<RealVectorValue>("gravity") = g;
+    params.set<MooseEnum>("advected_interp_method") = getParam<MooseEnum>("advected_interp_method");
     if (_capillary)
       params.set<bool>("capillary") = true;
     getProblem().addFVKernel("VEFVAdvectiveFlux", prefix() + "co2_flux", params);
@@ -144,6 +157,7 @@ VEFlowFV::addFVKernels()
     params.set<MooseFunctorName>("z_top") = z_top;
     params.set<MooseFunctorName>("z_bottom") = z_bottom;
     params.set<RealVectorValue>("gravity") = g;
+    params.set<MooseEnum>("advected_interp_method") = getParam<MooseEnum>("advected_interp_method");
     getProblem().addFVKernel("VEFVAdvectiveFlux", prefix() + "brine_flux", params);
   }
 

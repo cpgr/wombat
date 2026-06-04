@@ -82,6 +82,20 @@
                   'tolerance 1e-7.'
   []
 
+  [ve_flow_fv_capillary_fringe_gradh]
+    type = PetscJacobianTester
+    input = 've_flow_fv_capillary_fringe_gradh.i'
+    ratio_tol = 1.0e-7
+    difference_tol = 1.0e-3
+    cli_args = '-mat_fd_type ds'
+    requirement = 'The [Physics/VEFlow/FiniteVolume] action with capillary = capillary_fringe on '
+                  'a laterally varying thickness shall additionally exercise the grad(H) fringe '
+                  'term ve_dPcup_dH = delta_rho*g*sat_n/S_n(h), using advected_interp_method = '
+                  'average so the no-flow (zero-velocity) state is differentiable, with a Jacobian '
+                  'consistent with the PETSc finite-difference approximation to within ratio '
+                  'tolerance 1e-7.'
+  []
+
   # --- Option equivalence (generated objects reproduce the hand-written cases) ---
 
   [ve_flow_dissolution_fe]

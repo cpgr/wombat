@@ -37,4 +37,37 @@
                   'semi-analytical reference shall be below 0.03 at t = 1e5 s, '
                   'validating the sign and magnitude of the grad(Pc^up) term.'
   []
+
+  # Capillary-FRINGE counterparts. Same counter-current setup but the upscaled-Pc
+  # slope is the fringe one, D(S) = D_sharp(S)/S_n(h(S)) (column imbibes faster).
+  # The reference (mcwhorter_fringe_reference.py, H = 20 m so S_n stays ~0.6-0.7,
+  # away from the D ~ sqrt(S) degeneracy) was cross-checked against an independent
+  # method-of-lines solve to L2 ~ 1e-7. abs_zero = 0.012 is below the fringe-vs-
+  # sharp separation (L2 ~ 0.022) so the test discriminates the S_n(h) factor's
+  # sign AND magnitude (a wrong sign blows up; the sharp coefficient fails).
+
+  [mcwhorter_fringe_fe]
+    type = CSVDiff
+    input = 'mcwhorter_fringe_fe.i'
+    csvdiff = 'mcwhorter_fringe_fe_csv.csv'
+    abs_zero = 0.012
+    requirement = 'VEAdvectiveFluxS with capillary=true and the capillary_fringe '
+                  'VEPlumeReconstruction + VEUpscaledCapPressure shall reproduce the '
+                  'fringe McWhorter-Sunada self-similar profile (D(S) = D_sharp/S_n(h(S))): '
+                  'the L2 error of sat_n against the semi-analytical reference shall be '
+                  'below 0.012 at t = 4e4 s, validating the sign and magnitude of the '
+                  'fringe S_n(h) capillary-diffusion factor.'
+  []
+
+  [mcwhorter_fringe_fv]
+    type = CSVDiff
+    input = 'mcwhorter_fringe_fv.i'
+    csvdiff = 'mcwhorter_fringe_fv_csv.csv'
+    abs_zero = 0.012
+    requirement = 'VEFVAdvectiveFlux with capillary=true and the capillary_fringe '
+                  'VEFVCapPressure (per-face Newton inversion) shall reproduce the fringe '
+                  'McWhorter-Sunada self-similar profile: the L2 error of sat_n against the '
+                  'semi-analytical reference shall be below 0.012 at t = 4e4 s, validating '
+                  'the sign and magnitude of the fringe S_n(h) factor.'
+  []
 []
