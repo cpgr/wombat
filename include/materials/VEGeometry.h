@@ -18,31 +18,21 @@
  * (not AD) because formation geometry is fixed and carries no Jacobian with
  * respect to the primary flow variables.
  *
- * Two input modes are supported; exactly one must be chosen:
+ * Inputs: z_top and z_bottom (both nodal AuxVariables).  ve_H = z_top - z_bottom.
+ * This is the single supported source of formation geometry; the ex2ve / Petrel
+ * upscaling workflow emits nodal z_top / z_bottom directly, and coupling both
+ * surfaces (rather than a precomputed thickness field) keeps geometry sourcing
+ * identical in FE and FV and compatible with eos_reference_depth = interface,
+ * which needs both surfaces.
  *
- *   top_bottom (default)
- *     Requires: z_top, z_bottom  (both nodal AuxVariables)
- *     Computes: ve_H = z_top - z_bottom
- *     Use for: synthetic / CSV-loaded geometries where the bottom surface
- *     elevation is explicitly available.
- *
- *   thickness
- *     Requires: z_top, H  (both nodal AuxVariables)
- *     Computes: ve_H = H  (used directly)
- *     Use for: real Exodus meshes from the Petrel upscaling workflow, where
- *     the workflow supplies H (column-averaged thickness) as a native field
- *     alongside phi_bar, K_up, etc.  z_bottom is not needed and need not be
- *     present on the mesh.
- *
- * In both modes ve_grad_z_top is computed via coupledGradient("z_top"),
- * which interpolates the nodal z_top AuxVariable to quadrature points using
- * the same LAGRANGE shape functions.  z_top must therefore be declared as a
- * LAGRANGE FIRST ORDER AuxVariable; CONSTANT MONOMIAL would produce a zero
- * gradient and silently kill the entire buoyancy drive.  ve_grad_H is formed
- * the same way (grad(H) in thickness mode, grad(z_T) - grad(z_B) in top_bottom
- * mode), so z_bottom / H must likewise be LAGRANGE FIRST ORDER for a non-zero
- * grad(H); a zero grad(H) silently drops the topography part of the capillary
- * drive but leaves the constant-thickness physics exact.
+ * ve_grad_z_top is computed via coupledGradient("z_top"), which interpolates the
+ * nodal z_top AuxVariable to quadrature points using the same LAGRANGE shape
+ * functions.  z_top must therefore be declared as a LAGRANGE FIRST ORDER
+ * AuxVariable; CONSTANT MONOMIAL would produce a zero gradient and silently kill
+ * the entire buoyancy drive.  ve_grad_H is formed the same way as
+ * grad(z_T) - grad(z_B), so z_bottom must likewise be LAGRANGE FIRST ORDER for a
+ * non-zero grad(H); a zero grad(H) silently drops the topography part of the
+ * capillary drive but leaves the constant-thickness physics exact.
  */
 class VEGeometry : public Material
 {
@@ -53,20 +43,11 @@ public:
 protected:
   void computeQpProperties() override;
 
-  // --- Input mode ---
-  const bool _thickness_mode; ///< true = thickness mode, false = top_bottom mode
-
-  // --- Inputs always required ---
+  // --- Inputs ---
   const VariableValue &    _z_top;
   const VariableGradient & _grad_z_top_var;
-
-  // --- Inputs required in top_bottom mode ---
-  const VariableValue * const    _z_bottom;          ///< nullptr in thickness mode
-  const VariableGradient * const _grad_z_bottom_var; ///< nullptr in thickness mode
-
-  // --- Inputs required in thickness mode ---
-  const VariableValue * const    _H_var;      ///< nullptr in top_bottom mode
-  const VariableGradient * const _grad_H_var; ///< nullptr in top_bottom mode
+  const VariableValue &    _z_bottom;
+  const VariableGradient & _grad_z_bottom_var;
 
   // --- Outputs ---
   MaterialProperty<Real> &         _H;

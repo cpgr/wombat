@@ -6,12 +6,13 @@
 # Fields are linear (so the CONSTANT MONOMIAL element value equals the centroid value
 # exactly), giving analytic gold values for the reader. On the 4x2 mesh over [0,400]x[0,200]
 # the element containing (50,50) has centroid (50,50):
-#   H        = 100 + 0.05*x        -> 102.5
+#   z_top    = -1000 + 0.02*x      -> structural top surface
+#   z_bottom = -1100 - 0.03*x      -> structural bottom surface (ve_H = z_top - z_bottom)
+#   ve_H     = z_top - z_bottom = 100 + 0.05*x -> 102.5 (computed by VEGeometry)
 #   phi_bar  = 0.2 + 0.0002*x      -> 0.21
 #   K_up_xx  = 1e-12*(1 + 0.001*x) -> 1.05e-12
 #   K_up_yy  = 5e-13               -> 5e-13
 #   K_up_xy  = 1e-13*(y/200)       -> 2.5e-14
-#   z_top    = -1000 + 0.02*x      -> structural surface (not verified here)
 
 [Mesh]
   type = GeneratedMesh
@@ -34,7 +35,7 @@
 []
 
 [AuxVariables]
-  [H]
+  [z_bottom]
     family = MONOMIAL
     order = CONSTANT
   []
@@ -61,9 +62,9 @@
 []
 
 [Functions]
-  [H_fn]
+  [zbottom_fn]
     type = ParsedFunction
-    expression = '100 + 0.05*x'
+    expression = '-1100 - 0.03*x'
   []
   [phi_fn]
     type = ParsedFunction
@@ -88,10 +89,10 @@
 []
 
 [AuxKernels]
-  [H_aux]
+  [zbottom_aux]
     type = FunctionAux
-    variable = H
-    function = H_fn
+    variable = z_bottom
+    function = zbottom_fn
     execute_on = 'INITIAL'
   []
   [phi_aux]

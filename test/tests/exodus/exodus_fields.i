@@ -2,10 +2,10 @@
 # an Exodus mesh (produced by exodus_fields_generator.i, standing in for the Petrel-to-2D
 # upscaling workflow) and verify they reach the VE materials correctly.
 #
-# Reads H, phi_bar, K_up_xx/yy/xy, z_top via initial_from_file_var, feeds them to VEGeometry
-# (thickness mode), VEPorosity and VEPermeability, and outputs the resulting material
-# properties (ve_H, ve_phi_bar, ve_K_up) via MaterialReal[Tensor]Aux. No flow solve is needed
-# (no flow solve) -- this isolates the field-reading + material-plumbing path.
+# Reads z_top, z_bottom, phi_bar, K_up_xx/yy/xy via initial_from_file_var, feeds them to
+# VEGeometry (ve_H = z_top - z_bottom), VEPorosity and VEPermeability, and outputs the
+# resulting material properties (ve_H, ve_phi_bar, ve_K_up) via MaterialReal[Tensor]Aux.
+# No flow solve is needed -- this isolates the field-reading + material-plumbing path.
 #
 # At the element containing (50,50) the analytic fields give (see generator):
 #   ve_H = 102.5, ve_phi_bar = 0.21, ve_K_up = [[1.05e-12, 2.5e-14],[2.5e-14, 5e-13]].
@@ -26,10 +26,10 @@
 
 [AuxVariables]
   # --- Fields read from the Exodus mesh (elemental) ---
-  [H]
+  [z_bottom]
     family = MONOMIAL
     order = CONSTANT
-    initial_from_file_var = H
+    initial_from_file_var = z_bottom
     initial_from_file_timestep = LATEST
   []
   [phi_bar]
@@ -129,7 +129,7 @@
   [geometry]
     type = VEGeometry
     z_top = z_top
-    H = H
+    z_bottom = z_bottom
   []
   [porosity]
     type = VEPorosity
