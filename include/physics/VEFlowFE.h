@@ -22,6 +22,7 @@ private:
   virtual void addAuxiliaryVariables() override;
   virtual void addFEKernels() override;
   virtual void addMaterials() override;
+  virtual void checkGeometryVariableType(const VariableName & var_name) const override;
 
   /// Variable order/family for the FE primary variables.
   const MooseEnum _order;

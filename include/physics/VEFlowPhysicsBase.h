@@ -36,6 +36,8 @@ protected:
   const VariableName & _z_bottom;
   /// Name of the dissolved-CO2 areal-mass aux variable (declared when dissolution is on).
   const VariableName & _c_diss;
+  /// True when the action declares z_top/z_bottom; false when the user provides them.
+  const bool _define_geometry_variables;
   /// True when eos_reference_depth = interface (rho/mu at the CO2-brine contact).
   const bool _interface_eos;
   /// True when the convective-dissolution chain (material + aux + sink) should be added.
@@ -57,6 +59,16 @@ protected:
 
   /// Add the VEDissolvedCO2Aux accumulator when dissolution is on (shared FE/FV).
   virtual void addAuxiliaryKernels() override;
+
+  /// Error (with an actionable "rebuild the Exodus file" message) if any field variable the
+  /// physics consumes -- name-valued phi_bar / K_up_*, the geometry variables, c_diss -- is
+  /// absent. Called at add_material, once all variables have been created.
+  void checkRequiredFields();
+
+  /// Verify a present geometry variable (z_top/z_bottom) is the right kind for this
+  /// discretization, with an actionable paramError if not. FE requires a nodal variable
+  /// (for the buoyancy gradient); FV requires a MooseVariableFVReal.
+  virtual void checkGeometryVariableType(const VariableName & var_name) const = 0;
 
 private:
   /// Add the elemental VEFluidProperties material (ve_density / ve_viscosity).

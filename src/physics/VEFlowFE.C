@@ -51,18 +51,17 @@ void
 VEFlowFE::addAuxiliaryVariables()
 {
   // Geometry elevations as FE LAGRANGE aux variables (a non-zero gradient of z_top is
-  // needed for the buoyancy drive). Declared only if the user has not already provided
-  // them under these names (e.g. from a mesh field).
-  for (const auto & name : {_z_top, _z_bottom})
-  {
-    if (!shouldCreateVariable(name, _blocks, /*error_if_aux=*/false))
-      continue;
-    auto params = getFactory().getValidParams("MooseVariable");
-    assignBlocks(params, _blocks);
-    params.set<MooseEnum>("order") = "FIRST";
-    params.set<MooseEnum>("family") = "LAGRANGE";
-    getProblem().addAuxVariable("MooseVariable", name, params);
-  }
+  // needed for the buoyancy drive). Skipped entirely when define_geometry_variables = false
+  // (the user provides z_top / z_bottom, e.g. from the mesh).
+  if (_define_geometry_variables)
+    for (const auto & name : {_z_top, _z_bottom})
+    {
+      auto params = getFactory().getValidParams("MooseVariable");
+      assignBlocks(params, _blocks);
+      params.set<MooseEnum>("order") = "FIRST";
+      params.set<MooseEnum>("family") = "LAGRANGE";
+      getProblem().addAuxVariable("MooseVariable", name, params);
+    }
 
   // Dissolved-CO2 accumulator: elemental (CONSTANT MONOMIAL) because VEDissolvedCO2Aux
   // reads the qp material property ve_dissolution_rate.
@@ -74,6 +73,22 @@ VEFlowFE::addAuxiliaryVariables()
     params.set<MooseEnum>("family") = "MONOMIAL";
     getProblem().addAuxVariable("MooseVariable", _c_diss, params);
   }
+}
+
+void
+VEFlowFE::checkGeometryVariableType(const VariableName & var_name) const
+{
+  // FE needs a continuous (e.g. LAGRANGE) geometry variable so coupledGradient(z_top) drives
+  // the buoyancy term. Reject a finite-volume variable, whose cell-constant representation has
+  // no usable gradient here.
+  if (isVariableFV(var_name))
+    paramError("define_geometry_variables",
+               "Geometry variable '",
+               var_name,
+               "' is a finite-volume variable, but this is an FE (continuous Galerkin) VEFlow "
+               "physics. z_top/z_bottom must be a continuous FE variable (e.g. order=FIRST "
+               "family=LAGRANGE) so their gradient drives the buoyancy term. Provide such a "
+               "variable, or set define_geometry_variables=true to let the action declare it.");
 }
 
 void

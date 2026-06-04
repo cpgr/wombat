@@ -2,6 +2,7 @@
 //* VEFlowPhysicsBase implementation -- see VEFlowPhysicsBase.h.
 
 #include "VEFlowPhysicsBase.h"
+#include "MooseUtils.h"
 
 InputParameters
 VEFlowPhysicsBase::validParams()
@@ -31,6 +32,16 @@ VEFlowPhysicsBase::validParams()
       "z_top", "z_top", "Name of the top-surface elevation z_T [m] aux variable.");
   params.addParam<VariableName>(
       "z_bottom", "z_bottom", "Name of the bottom-surface elevation z_B [m] aux variable.");
+  params.addParam<bool>(
+      "define_geometry_variables",
+      true,
+      "If true (default) the action declares the z_top / z_bottom aux variables with the "
+      "correct type for the discretization (FE LAGRANGE / FV MooseVariableFVReal); you supply "
+      "their values via an IC. If false the action does NOT declare them -- you provide them "
+      "yourself (e.g. read elemental fields from an Exodus mesh with initial_from_file_var) -- "
+      "and the action checks that they exist and are the right type, erroring otherwise. Set "
+      "false whenever the geometry comes from the mesh, so you control the variables explicitly "
+      "rather than relying on the action's declaration merging with yours.");
 
   // Petrophysics (constant for verification, or coupled fields on real cases).
   params.addRequiredCoupledVar("phi_bar", "Depth-averaged porosity [-].");
@@ -116,6 +127,7 @@ VEFlowPhysicsBase::VEFlowPhysicsBase(const InputParameters & parameters)
     _z_top(getParam<VariableName>("z_top")),
     _z_bottom(getParam<VariableName>("z_bottom")),
     _c_diss(getParam<VariableName>("dissolved_co2_variable")),
+    _define_geometry_variables(getParam<bool>("define_geometry_variables")),
     _interface_eos(getParam<MooseEnum>("eos_reference_depth") == "interface"),
     _dissolution(getParam<bool>("enable_dissolution")),
     _capillary(getParam<bool>("capillary"))
@@ -153,8 +165,69 @@ VEFlowPhysicsBase::assignSwr(InputParameters & params) const
 }
 
 void
+VEFlowPhysicsBase::checkRequiredFields()
+{
+  // Validate that every field variable this physics consumes actually exists. Catches the
+  // common real-field mistake of pointing phi_bar / K_up / geometry at an Exodus field name
+  // that the upscaling workflow did not emit (or that is misspelled), with a message that
+  // tells the user to rebuild the mesh -- instead of a downstream "no such variable" or a
+  // silently-zero field. Runs at add_material, after all variables (action-declared,
+  // user [AuxVariables], and initial_from_file_var) have been created. Coupled params given
+  // as a numeric constant (e.g. phi_bar = 0.2) carry no variable name and are skipped.
+  std::vector<std::string> missing;
+  auto check_coupled = [&](const std::string & pname)
+  {
+    // Skip an unset optional coupled var (e.g. K_up_xy) or one given as a constant
+    // (no variable name to resolve); getParam would throw on a never-set coupled var.
+    if (!isParamValid(pname))
+      return;
+    for (const auto & vn : getParam<std::vector<VariableName>>(pname))
+      if (!MooseUtils::parsesToReal(vn) && !getProblem().hasVariable(vn))
+        missing.push_back(std::string(vn) + " (" + pname + ")");
+  };
+  check_coupled("phi_bar");
+  check_coupled("K_up_xx");
+  check_coupled("K_up_yy");
+  check_coupled("K_up_xy");
+
+  for (const auto & vn : {_z_top, _z_bottom})
+    if (!getProblem().hasVariable(vn))
+      missing.push_back(std::string(vn) + " (geometry)");
+  if (_dissolution && !getProblem().hasVariable(_c_diss))
+    missing.push_back(std::string(_c_diss) + " (dissolved_co2_variable)");
+
+  // Type-correctness of the geometry variables for this discretization (FV must be
+  // MooseVariableFVReal, FE must be nodal). Meaningful chiefly when
+  // define_geometry_variables = false (the user supplies them); when the action declares
+  // them it declares the right type, so this passes. Only checked when present -- a missing
+  // one is reported below.
+  for (const auto & vn : {_z_top, _z_bottom})
+    if (getProblem().hasVariable(vn))
+      checkGeometryVariableType(vn);
+
+  if (missing.empty())
+    return;
+
+  std::string list;
+  for (const auto & m : missing)
+    list += (list.empty() ? "" : ", ") + m;
+  mooseError(
+      "VEFlow: the following field variable(s) consumed by this physics are not present in "
+      "the problem: ",
+      list,
+      ".\nIf your model reads petrophysical/geometry fields from an Exodus mesh, rebuild the "
+      "mesh file so it contains element or nodal fields with these exact names -- the upscaling "
+      "workflow must emit z_top, z_bottom, phi_bar, K_up_xx, K_up_yy (and K_up_xy if anisotropic) "
+      "-- and read them via [AuxVariables] with initial_from_file_var. Otherwise supply them as "
+      "constants or declare the variables yourself.");
+}
+
+void
 VEFlowPhysicsBase::addCommonMaterials()
 {
+  // Fail early with an actionable message if any consumed field is missing.
+  checkRequiredFields();
+
   // Porosity.
   {
     auto params = getFactory().getValidParams("VEPorosity");

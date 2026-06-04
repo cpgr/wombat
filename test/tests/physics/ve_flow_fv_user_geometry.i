@@ -1,13 +1,10 @@
-# VE flow [Physics] regression -- FV (cell-centered finite volume).
+# VE flow [Physics] -- FV, define_geometry_variables = false (user owns z_top/z_bottom).
 #
-# Reproduces nc_sloped_fv.i but replaces the hand-written [Variables],
-# [FVKernels], [Materials] and [FunctorMaterials] blocks with a single
-# [Physics/VEFlow/FiniteVolume] block. CSVDiff'd against the nc_sloped_fv gold.
-#
-# The action declares z_top/z_bottom (MooseVariableFVReal) itself; the ICs below set
-# their values. The coupled FV solve also needs SMP full=true, which stays in the
-# user's [Preconditioning]. (See ve_flow_fv_user_geometry.i for define_geometry_variables
-# = false, where the user declares the geometry instead.)
+# Same problem as ve_flow_fv.i (Nordbotten-Celia sloped aquifer) but the action defers
+# geometry-variable declaration: the user declares z_top / z_bottom as MooseVariableFVReal
+# and the action validates their existence + type, then couples to them. Mirrors the
+# real-field workflow where geometry is read from the mesh. CSVDiff'd against the same
+# nc_sloped_fv result, proving the opt-out path is equivalent.
 
 [Mesh]
   type = GeneratedMesh
@@ -39,7 +36,6 @@
   []
 []
 
-# All of [Variables], [FVKernels], [Materials] and [FunctorMaterials] generated here.
 [Physics/VEFlow/FiniteVolume]
   [ve]
     z_top = z_top
@@ -50,6 +46,18 @@
     fp_nw = co2_fp
     fp_w = brine_fp
     relperm_uo = relperm_uo
+    define_geometry_variables = false # user declares z_top / z_bottom below
+  []
+[]
+
+# The user owns the geometry variables (as a mesh-read workflow would). They must be
+# MooseVariableFVReal; the action checks this and errors otherwise.
+[AuxVariables]
+  [z_top]
+    type = MooseVariableFVReal
+  []
+  [z_bottom]
+    type = MooseVariableFVReal
   []
 []
 
@@ -72,7 +80,6 @@
   []
 []
 
-# ICs attach to the Physics-generated FV primary variables (pp_top, sat_n) by name.
 [ICs]
   [pp_top_ic]
     type = FunctionIC
@@ -95,9 +102,6 @@
     function = z_bottom_func
   []
 []
-
-# z_top / z_bottom are declared by the [Physics] action (MooseVariableFVReal); the ICs
-# above set their values. No [AuxVariables] block is needed for the geometry.
 
 [FVBCs]
   [pp_right]

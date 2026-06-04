@@ -57,16 +57,20 @@ void
 VEFlowFV::addAuxiliaryVariables()
 {
   // Geometry elevations + dissolved-CO2 accumulator as FV (MooseVariableFVReal) aux
-  // variables. The action owns the correct type so the FE-on-FV-face trap cannot arise
-  // for the variables it declares. Declared only if not already provided under these names.
-  std::vector<VariableName> aux_names = {_z_top, _z_bottom};
+  // variables. Geometry is skipped when define_geometry_variables = false (the user provides
+  // z_top / z_bottom, e.g. elemental fields from an Exodus mesh); c_diss is always action-owned
+  // (it is an internal accumulator, never a mesh field).
+  std::vector<VariableName> aux_names;
+  if (_define_geometry_variables)
+  {
+    aux_names.push_back(_z_top);
+    aux_names.push_back(_z_bottom);
+  }
   if (_dissolution)
     aux_names.push_back(_c_diss);
 
   for (const auto & name : aux_names)
   {
-    if (!shouldCreateVariable(name, _blocks, /*error_if_aux=*/false))
-      continue;
     auto params = getFactory().getValidParams("MooseVariableFVReal");
     assignBlocks(params, _blocks);
     getProblem().addAuxVariable("MooseVariableFVReal", name, params);
@@ -74,28 +78,24 @@ VEFlowFV::addAuxiliaryVariables()
 }
 
 void
-VEFlowFV::checkGeometryVariablesAreFV() const
+VEFlowFV::checkGeometryVariableType(const VariableName & var_name) const
 {
-  // The action declares z_top/z_bottom as FV; this guards the case where the user
-  // pre-declared them under these names as a regular FE variable, which is not
-  // reinitialised on FV faces (reads zero there and silently kills the advective flux).
-  for (const VariableName & name : {_z_top, _z_bottom})
-    if (getProblem().hasVariable(name) && !isVariableFV(name))
-      paramError("z_top",
-                 "Geometry variable '",
-                 name,
-                 "' is not a finite-volume variable. In the FV VE flow physics z_top and "
-                 "z_bottom must be MooseVariableFVReal: regular FE aux variables are not "
-                 "reinitialised on FV faces, so they read as zero at every face and silently "
-                 "kill the advective flux. Either let the action declare them or declare them "
-                 "with type = MooseVariableFVReal.");
+  // FV needs MooseVariableFVReal geometry: an FE aux is not reinitialised on FV faces, so it
+  // reads zero there and silently kills the advective flux.
+  if (!isVariableFV(var_name))
+    paramError("define_geometry_variables",
+               "Geometry variable '",
+               var_name,
+               "' is not a finite-volume variable. In an FV VEFlow physics z_top/z_bottom must "
+               "be MooseVariableFVReal: a regular FE aux variable is not reinitialised on FV "
+               "faces, so it reads as zero there and silently kills the advective flux. Declare "
+               "it as type = MooseVariableFVReal, or set define_geometry_variables=true to let "
+               "the action declare it.");
 }
 
 void
 VEFlowFV::addFVKernels()
 {
-  checkGeometryVariablesAreFV();
-
   const auto & g = getParam<RealVectorValue>("gravity");
   const VariableName & z_top = _z_top;
   const VariableName & z_bottom = _z_bottom;

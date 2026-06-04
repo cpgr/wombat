@@ -1,8 +1,8 @@
-# Negative test: FV VE flow physics with z_top wrongly pre-declared as a regular FE
-# (LAGRANGE) aux variable. The action declares z_top as MooseVariableFVReal, so the FE
-# declaration collides with it and MOOSE rejects the inconsistent variable type -- the
-# guard against an FE aux (which is not reinitialised on FV faces, reads zero there, and
-# would silently kill the advective flux). See physics/tests (err_fv_geometry_fe_variable).
+# Negative test: FV VE flow physics with define_geometry_variables = false (the user owns
+# z_top / z_bottom) but z_top wrongly declared as a regular FE (LAGRANGE) variable. The
+# action defers declaration, then checkGeometryVariableType errors because an FE aux is not
+# reinitialised on FV faces (reads zero there, would silently kill the advective flux).
+# See physics/tests (err_fv_geometry_fe_variable).
 
 [Mesh]
   type = GeneratedMesh
@@ -44,14 +44,19 @@
     fp_nw = co2_fp
     fp_w = brine_fp
     relperm_uo = relperm_uo
+    define_geometry_variables = false # user provides z_top / z_bottom
   []
 []
 
-# WRONG on purpose: z_top declared as a continuous FE variable in an FV physics.
 [AuxVariables]
+  # WRONG on purpose: z_top is a continuous FE variable in an FV physics.
   [z_top]
     order = FIRST
     family = LAGRANGE
+  []
+  # z_bottom correct (FV) so the error isolates to z_top.
+  [z_bottom]
+    type = MooseVariableFVReal
   []
 []
 

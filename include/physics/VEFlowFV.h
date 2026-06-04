@@ -7,10 +7,11 @@
 //* functor materials (VEFVRelPerm, VEFVFluidProperties).
 //*
 //* Note: no VEGeometry -- the FV kernels build H and grad(z_T) inline from the
-//* z_top / z_bottom FV variables. Those geometry variables MUST themselves be
-//* MooseVariableFVReal aux variables (regular FE materials are not reinitialised
-//* on FV faces); the Physics only couples them by name. The coupled FV solve also
-//* needs SMP full=true, which stays in the user's [Preconditioning] block.
+//* z_top / z_bottom variables, which the action declares as MooseVariableFVReal.
+//* If the user instead pre-declares them, they must be MooseVariableFVReal (a
+//* regular FE aux is not reinitialised on FV faces); a mismatched type is caught
+//* by MOOSE's variable-type-consistency check. The coupled FV solve also needs
+//* SMP full=true, which stays in the user's [Preconditioning] block.
 //* Syntax: [Physics/VEFlow/FiniteVolume/<name>].
 
 #pragma once
@@ -32,9 +33,5 @@ private:
   virtual void addFunctorMaterials() override;
   virtual void initializePhysicsAdditional() override;
   virtual InputParameters getAdditionalRMParams() const override;
-
-  /// Verify z_top / z_bottom are MooseVariableFVReal. Regular FE aux variables are
-  /// not reinitialised on FV faces, so they read as zero there and silently kill the
-  /// advective flux -- this turns that quiet failure into an up-front error.
-  void checkGeometryVariablesAreFV() const;
+  virtual void checkGeometryVariableType(const VariableName & var_name) const override;
 };
