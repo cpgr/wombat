@@ -9,7 +9,7 @@
 #   krn / krw  via VERelPerm -> ve_relperm   (VERelPermTableUO interpolation)
 #   ve_h       via VEPlumeReconstruction      (VECapillaryPressureTableUO read,
 #                                              capillary_fringe Newton inversion)
-# The gold (gold/tabulated_uo.csv) is computed independently in numpy by
+# The gold (gold/tabulated_uo_out.csv) is computed independently in numpy by
 # tabulated_gold.py (np.interp for kr; the same 64-point inversion for ve_h), so a
 # match proves the UOs read and interpolate the tables correctly.
 

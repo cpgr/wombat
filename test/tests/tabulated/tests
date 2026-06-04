@@ -33,7 +33,7 @@
   [tabulated_uo]
     type = CSVDiff
     input = 'tabulated_uo.i'
-    csvdiff = 'tabulated_uo.csv'
+    csvdiff = 'tabulated_uo_out.csv'
     prereq = 'script_regression'
     rel_err = 1.0e-6
     requirement = 'VERelPermTableUO and VECapillaryPressureTableUO shall ingest the [UserObjects] '

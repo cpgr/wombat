@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the independent gold for tabulated_uo.i.
 
-tabulated_uo.i (gold/tabulated_uo.csv) feeds the ve_upscale_curves.py output tables (gold/curves_*.csv,
+tabulated_uo.i (gold/tabulated_uo_out.csv) feeds the ve_upscale_curves.py output tables (gold/curves_*.csv,
 emitted as the curves_upscaled.i [UserObjects] block) into the table-reading
 UserObjects and samples them at sat_n = 0.1, 0.2, ..., 0.6:
 
@@ -78,7 +78,7 @@ for t, s in enumerate(SAT_N, start=1):
                  float(np.interp(s, satn_tbl, krw_tbl)),
                  ve_h(s)))
 
-out = os.path.join(HERE, "gold", "tabulated_uo.csv")
+out = os.path.join(HERE, "gold", "tabulated_uo_out.csv")
 with open(out, "w") as f:
     f.write("time,krn,krw,ve_h\n")
     for r in rows:
