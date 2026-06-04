@@ -143,6 +143,35 @@
                   'into the Physics path with no other change.'
   []
 
+  [ve_flow_exodus_fields]
+    type = CSVDiff
+    input = 've_flow_exodus_fields.i'
+    csvdiff = 've_flow_exodus_fields_csv.csv'
+    rel_err = 1.0e-8
+    requirement = 'The [Physics/VEFlow/FiniteVolume] action shall accept AuxVariable names for '
+                  'phi_bar, K_up_xx/yy/xy and z_top/z_bottom (the coupled-var path, mirroring a '
+                  'real field workflow where petrophysical fields are read from an Exodus mesh), '
+                  'threading them correctly through assignCoupled into the generated VEPorosity, '
+                  'VEPermeability and VEGeometry materials: field values at the sample element '
+                  '(50,50) shall reproduce the exodus/exodus_fields.i gold '
+                  '(ve_H = 102.5, ve_phi_bar = 0.21, ve_K_up diagonal 1.05e-12/5e-13, '
+                  'off-diagonal 2.5e-14).'
+  []
+
+  [ve_flow_var_names]
+    type = CSVDiff
+    input = 've_flow_var_names.i'
+    csvdiff = 've_flow_var_names_csv.csv'
+    cli_args = 'Executioner/end_time=5000'
+    rel_err = 1.0e-5
+    requirement = 'The [Physics/VEFlow/FiniteElement] action shall honour the pressure_variable '
+                  'and saturation_variable rename parameters: renaming pp_top -> p_top and '
+                  'sat_n -> s_co2 shall propagate through every generated kernel, material '
+                  'coupling and aux-variable reference so that the renamed-variable solve '
+                  'reproduces the buckley_leverett/bl_flat.i Buckley-Leverett result, confirming '
+                  'the rename is transparent to the physics.'
+  []
+
   # --- Negative tests (the Physics validation guards) ---
 
   [ve_flow_fv_user_geometry]
