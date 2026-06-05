@@ -7,11 +7,11 @@
 `VEMassTimeDerivative` implements the depth-integrated mass storage term for one fluid
 phase in the FE formulation:
 
-$$
+\begin{equation}
 \frac{\partial}{\partial t}\!\left(H \, \bar{\phi} \, \rho_c \, \bar{S}_c\right)
   = \frac{\left(H \, \bar{\phi} \, \rho_c \, \bar{S}_c\right)^{\text{new}}
            - \left(H \, \bar{\phi} \, \rho_c \, \bar{S}_c\right)^{\text{old}}}{\Delta t}
-$$
+\end{equation}
 
 where $H$ = `ve_H`, $\bar{\phi}$ = `ve_phi_bar`, $\rho_c$ = `ve_density[c]`,
 $\bar{S}_c$ = `ve_saturation[c]`.

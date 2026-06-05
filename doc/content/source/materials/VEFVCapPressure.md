@@ -10,13 +10,13 @@ as functors consumed by `VEFVAdvectiveFlux` when `capillary != none`.
 
 The gradient of the upscaled capillary pressure is decomposed as:
 
-$$
+\begin{equation}
 \nabla P_c^{up} \cdot \hat{n}
    = \underbrace{\frac{\partial P_c^{up}}{\partial S_n}}_{\texttt{ve\_dPcup\_dsatn}}
      \nabla S_n \cdot \hat{n}
    + \underbrace{\frac{\partial P_c^{up}}{\partial H}}_{\texttt{ve\_dPcup\_dH}}
      \nabla H \cdot \hat{n}
-$$
+\end{equation}
 
 The kernel uses the `sat_n` variable gradient (boundary-aware: picks up Dirichlet BCs)
 rather than a material-functor Green–Gauss gradient, so `ve_pc_up` is published for

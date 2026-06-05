@@ -11,9 +11,9 @@ the depth-averaged saturation `sat_n`.  Two modes are supported:
 
 Nordbotten–Celia analytical formula:
 
-$$
+\begin{equation}
 h = \frac{S_n \, H}{1 - S_{wr}}
-$$
+\end{equation}
 
 Closed form, cheap, and used in all standard verification cases.
 
@@ -21,10 +21,10 @@ Closed form, cheap, and used in all standard verification cases.
 
 Newton inversion of the depth-averaged saturation integral:
 
-$$
+\begin{equation}
 \bar{S}_n(h) = \frac{1}{H} \int_0^h \left[1 - S_w\!\left(P_c(\zeta)\right)\right]
 \mathrm{d}\zeta
-$$
+\end{equation}
 
 where $P_c(\zeta) = (\rho_w - \rho_{CO_2}) \, g \, \zeta$ is the buoyancy-driven
 capillary pressure at height $\zeta$ above the CO2–brine contact, and $S_w(P_c)$ is

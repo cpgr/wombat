@@ -7,10 +7,10 @@
 `VEFVAdvectiveFlux` implements the cell-centered FV depth-integrated Darcy advective
 flux for one fluid phase:
 
-$$
+\begin{equation}
 F_c \cdot \hat{n} = -H \, K_{nn} \, \frac{k_{r,c} \, \rho_c}{\mu_c}
   \left( \nabla p_{top} \cdot \hat{n} + \rho_c \, |g| \, \nabla z_T \cdot \hat{n} \right)
-$$
+\end{equation}
 
 A single kernel serves both the CO2 (`fluid_phase = 0`, `variable = sat_n`) and brine
 (`fluid_phase = 1`, `variable = pp_top`) equations.

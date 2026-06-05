@@ -8,9 +8,9 @@
 `ve_dissolution_rate` (kg/m$^2$/s) computed by `VEDissolution`.  It is assigned to
 `variable = sat_n` (the CO2 mass equation) and contributes a positive residual term:
 
-$$
+\begin{equation}
 R = +\dot{m}_{diss}
-$$
+\end{equation}
 
 so that together with the storage term $\partial_t(H \phi \rho_c S_n) + \ldots +
 \dot{m}_{diss} = 0$ the free CO2 mass decreases (the dissolution is a sink).

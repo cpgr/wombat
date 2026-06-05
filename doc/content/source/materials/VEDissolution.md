@@ -7,9 +7,9 @@
 `VEDissolution` computes the convective-dissolution rate of free-phase CO2 into the
 underlying brine as an areal mass flux `ve_dissolution_rate` (kg/m$^2$/s):
 
-$$
+\begin{equation}
 \dot{m}_{diss} = q_0 \cdot \text{gate}(S_n) \cdot \text{capacity}(c_{diss})
-$$
+\end{equation}
 
 **$q_0$** (`dissolution_flux`) is the constant convective dissolution flux.  In the
 density-driven convective regime (Pau et al. 2010; Hesse et al.) the flux per unit

@@ -7,10 +7,10 @@
 `VEFVMassTimeDerivative` is the cell-centered FV analogue of `VEMassTimeDerivative`.
 It implements the depth-integrated mass storage term for one fluid phase:
 
-$$
+\begin{equation}
 \frac{\left(H \, \bar{\phi} \, \rho_c \, \bar{S}_c\right)^{\text{new}}
       - \left(H \, \bar{\phi} \, \rho_c \, \bar{S}_c\right)^{\text{old}}}{\Delta t}
-$$
+\end{equation}
 
 Formation thickness $H$ is built inline from FV variable cell values
 $H = z_{top} - z_{bottom}$ rather than from `VEGeometry`'s `ve_H`, because

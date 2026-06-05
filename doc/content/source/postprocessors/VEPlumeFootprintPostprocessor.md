@@ -8,9 +8,9 @@
 depth-averaged CO2 saturation `sat_n` exceeds a threshold, reporting the 2-D
 footprint of the CO2 plume:
 
-$$
+\begin{equation}
 A_{plume} = \int_\Omega \mathbf{1}(S_n > \varepsilon) \, dA \quad (\text{m}^2)
-$$
+\end{equation}
 
 The threshold $\varepsilon$ defaults to $10^{-6}$ to exclude numerical noise at the
 plume front.

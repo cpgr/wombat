@@ -7,9 +7,9 @@
 `VEMobileCO2MassPostprocessor` integrates the depth-averaged mobile CO2 mass over the
 2-D domain:
 
-$$
+\begin{equation}
 M_{mobile} = \int_\Omega \rho_{CO_2} \, \bar{\phi} \, H \, S_{n,mobile} \, dA \quad (\text{kg})
-$$
+\end{equation}
 
 where $S_{n,mobile} = S_n - S_{n,trap}$ (free CO2 saturation).
 

@@ -17,15 +17,15 @@ residual trapping, and dissolution.
 
 Per fluid component $c$, depth-integrated mass conservation reads:
 
-$$
+\begin{equation}
 \frac{\partial}{\partial t}\!\left(H\,\bar{\phi}\,\rho_c\,\bar{S}_c\right)
   + \nabla \cdot F_c - q_c = 0
-$$
+\end{equation}
 
-$$
+\begin{equation}
 F_c = -H\,\mathbf{K}_{up}\,\frac{k_{r,c}^{up}\,\rho_c}{\mu_c}
       \left(\nabla p_{top} + \rho_c\,g\,\nabla z_T\right)
-$$
+\end{equation}
 
 The $\rho_c\,g\,\nabla z_T$ term — the **sloped-top-surface buoyancy drive** — is the
 dominant up-dip migration mechanism at field scale.  Primary variables are $p_{top}$

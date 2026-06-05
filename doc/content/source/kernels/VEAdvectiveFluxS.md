@@ -15,18 +15,18 @@ respect to pressure are exact.
 
 The flux is:
 
-$$
+\begin{equation}
 F_n = -H \, \mathbf{K}_{up} \, \frac{k_{r,n}^{up}}{\mu_n} \, \rho_n
          \left( \nabla p_{top} + \rho_n \, |g| \, \nabla z_T \right)
-$$
+\end{equation}
 
 When `capillary = true` (or `capillary_fringe`), the CO2 Darcy potential is augmented
 by $\nabla P_c^{up}$:
 
-$$
+\begin{equation}
 \nabla P_c^{up} = \texttt{ve\_dPcup\_dsatn} \cdot \nabla S_n
                   + \texttt{ve\_dPcup\_dH} \cdot \nabla H
-$$
+\end{equation}
 
 sourced from `VEUpscaledCapPressure`.  The `VEPlumeReconstruction` and
 `VEUpscaledCapPressure` materials must be present when `capillary != none`.

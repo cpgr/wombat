@@ -12,16 +12,16 @@ $C = (1 - S_{wr}) / S_{gr,max} - 1$:
 
 **Drainage** ($S_n \geq S_{n,max}$):
 
-$$
+\begin{equation}
 k_{r,n} = k_{r,n}^{max} \cdot s
-$$
+\end{equation}
 
 **Imbibition** ($S_n < S_{n,max}$):
 
-$$
+\begin{equation}
 s_{gr} = \frac{s_{max}}{1 + C \, s_{max}}, \qquad
 k_{r,n} = k_{r,n}^{max} \cdot s_{max} \cdot \frac{s - s_{gr}}{s_{max} - s_{gr}}
-$$
+\end{equation}
 
 The imbibition curve is continuous with the drainage line at the turning point and
 vanishes at $s = s_{gr}$, immobilising the residual CO2.  A monotonically increasing
@@ -33,9 +33,9 @@ reduces **exactly** to `VERelPermSharpUO` during injection.
 
 The trapped saturation is:
 
-$$
+\begin{equation}
 S_{n,trap} = (1 - S_{wr}) \cdot s_{gr} \cdot \frac{s_{max} - s}{s_{max} - s_{gr}}
-$$
+\end{equation}
 
 reported by `trappedSaturation()` and written by `VETrappedSaturationAux`.
 

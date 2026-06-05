@@ -14,10 +14,10 @@ Dirichlet `pp_top` on the same boundary.
 
 The flux is evaluated using the same functors as `VEFVAdvectiveFlux`:
 
-$$
+\begin{equation}
 F_c \cdot \hat{n} = -H \, K_{nn} \, \frac{k_{r,c} \, \rho_c}{\mu_c}
   \left( \nabla p_{top} \cdot \hat{n} + \rho_c \, |g| \, \nabla z_T \cdot \hat{n} \right)
-$$
+\end{equation}
 
 The boundary pressure drive picks up the `pp_top` Dirichlet BC (so the Darcy velocity
 is set by prescribed pressure + buoyancy).  The relative permeability is taken from the

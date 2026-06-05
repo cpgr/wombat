@@ -7,10 +7,10 @@
 `VEDissolvedCO2MassPostprocessor` integrates the CO2 mass dissolved in the brine
 column:
 
-$$
+\begin{equation}
 M_{diss} = \int_\Omega \rho_{brine} \, \bar{\phi} \, H \, (1 - S_n) \, X_{CO_2} \, dA
   \quad (\text{kg})
-$$
+\end{equation}
 
 where $X_{CO_2}$ is the dissolved CO2 mass fraction in brine (kg CO2 / kg brine),
 supplied as a coupled `AuxVariable`.  It defaults to zero when not coupled, making

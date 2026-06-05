@@ -10,16 +10,16 @@
 
 After integration by parts the weak-form contribution is:
 
-$$
+\begin{equation}
 \int_\Omega \nabla\psi \cdot F_c \, d\Omega
-$$
+\end{equation}
 
 with
 
-$$
+\begin{equation}
 F_c = -H \, \mathbf{K}_{up} \, \frac{k_{r,c}^{up}}{\mu_c} \, \rho_c
          \left( \nabla p_{top} + \rho_c \, |g| \, \nabla z_T \right)
-$$
+\end{equation}
 
 Because the kernel variable is `pp_top`, MOOSE's `_grad_u[_qp]` already holds
 $\nabla p_{top}$ with full AD derivatives — no extra coupling is needed.

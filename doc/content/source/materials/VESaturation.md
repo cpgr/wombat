@@ -8,12 +8,12 @@
 the two-element `ADMaterialProperty<std::vector<Real>>` named `ve_saturation` expected
 by the VE kernels and `VERelPerm`:
 
-$$
+\begin{equation}
 \text{ve\_saturation}(0) = S_n \quad (\text{CO}_2,\;\text{non-wetting})
-$$
-$$
+\end{equation}
+\begin{equation}
 \text{ve\_saturation}(1) = 1 - S_n \quad (\text{brine},\;\text{wetting})
-$$
+\end{equation}
 
 Because the property is declared as `ADMaterialProperty`, derivatives of `sat_n`
 propagate automatically into `VEMassTimeDerivative` and `VERelPerm` without any

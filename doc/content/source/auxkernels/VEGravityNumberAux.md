@@ -8,9 +8,9 @@
 VE-validity indicator that quantifies the ratio of vertical gravity segregation to
 lateral viscous flow:
 
-$$
+\begin{equation}
 \Gamma = \frac{k_v \, \Delta\rho \, g \, H^2}{\mu_n \, \bar{\phi} \, Q \, L}
-$$
+\end{equation}
 
 where:
 

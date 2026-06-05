@@ -9,19 +9,19 @@ and its partial derivatives, consumed by `VEAdvectiveFluxS` when `capillary != n
 
 The upscaled capillary pressure is:
 
-$$
+\begin{equation}
 P_c^{up} = (\rho_w - \rho_n) \, |g| \, h + P_{c,entry}
-$$
+\end{equation}
 
 where $h$ is the plume thickness from `VEPlumeReconstruction` (`ve_h`) and
 $P_{c,entry}$ is an optional constant entry pressure (default 0).
 
 `VEAdvectiveFluxS` assembles the full chain-rule gradient:
 
-$$
+\begin{equation}
 \nabla P_c^{up} = \underbrace{\frac{\partial P_c^{up}}{\partial S_n}}_{\texttt{ve\_dPcup\_dsatn}} \nabla S_n
                  + \underbrace{\frac{\partial P_c^{up}}{\partial H}}_{\texttt{ve\_dPcup\_dH}} \nabla H
-$$
+\end{equation}
 
 with, writing $S_n(h) = 1 - S_w(\Delta\rho \, g \, h)$ for the CO2 saturation at the
 plume top:

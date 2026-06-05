@@ -7,9 +7,9 @@
 `VEDissolvedCO2Aux` accumulates the areal dissolved CO2 mass $c_{diss}$ (kg/m$^2$)
 removed from the free phase by `VEDissolutionSink`:
 
-$$
+\begin{equation}
 c_{diss} \leftarrow c_{diss}^{old} + \dot{m}_{diss} \cdot \Delta t
-$$
+\end{equation}
 
 It executes at `TIMESTEP_END` using the converged end-of-step rate, so the dissolved
 inventory gained exactly equals the free CO2 mass removed (mass conservation under

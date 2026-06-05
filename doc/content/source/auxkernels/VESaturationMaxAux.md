@@ -8,9 +8,9 @@
 the turning point of the imbibition scanning curve used by `VERelPermHysteresisUO` for
 residual trapping:
 
-$$
+\begin{equation}
 S_{n,\max} \leftarrow \max(S_n, S_{n,\max}^{\text{old}})
-$$
+\end{equation}
 
 It is advanced once per timestep (`execute_on = TIMESTEP_END`, after the nonlinear
 solve converges), keeping `sat_n_max` frozen within each solve.  This makes the
