@@ -228,3 +228,110 @@ percent before touching Johansen or real EOS.
 The scaffold under `benchmarks/cross_code/anticline/` stands this up to the point
 where the only missing piece is the MRST reference CSV (currently a placeholder --
 see `reference/README.md`).
+
+## Step-2 result: Nordbotten-Celia sloped aquifer (nc_sloped)
+
+Before the anticline, the 1D sloped aquifer was run against an MRST
+`CO2VEBlackOilTypeModel` mirror. The inputs live in
+`benchmarks/cross_code/nordbotten_celia/`:
+`nc_sloped_mrst.m` (MRST), `nc_sloped_fv_crosscode.i` (wombat, capillary on, the
+comparison input), and `nc_buoyancy_slump.i` (the pure-buoyancy diagnostic). The clean
+**capillary-off** regression test stays at `test/tests/nordbotten_celia/nc_sloped_fv.i`.
+This is the cleanest rung -- 1D, constant properties, no trap, `S_wr = 0`, continuous
+injection -- with three hand-checkable anchors at `t = 2e6 s`: injected mass 5600 kg,
+integral(sat_n dx) = 2.0 m, gravity nose `v_N = K*drho*g*sin(theta)/(phi*mu_n)` -> 21.9 m.
+
+**Outcome:** after forcing the MRST CO2 to be incompressible (see below), the two
+codes agree to ~0.1% on mass and injection -- mass integral 2.002 vs 2.0, injected
+mass 5605 vs 5600 kg. The CO2 *migration*, however, differed substantially, and
+chasing it down produced the key lesson of this rung.
+
+**The migration difference is the hydrostatic spreading term `Δρ·g·∂h/∂x`** (the
+two-pressure capillary flux `Pc^up = Δρ·g·h`). wombat's `nc_sloped_fv.i` runs with
+**capillary off**, so its CO2 feels only the slope drive -- it migrates at the
+analytic nose velocity `v_N` and barely spreads. MRST's `CO2VEBlackOilTypeModel`
+includes `p_g - p_w = Δρ·g·h` **intrinsically** and cannot disable it, so it spreads
+strongly. The mismatch is therefore **saturation-dependent** (`∂h/∂x` grows with
+column thickness): ~2x at the thin injection inlet (s≈0.09), ~10x for a thick
+gravity-slumping block (s=0.5).
+
+This was proven with a **pure-buoyancy block-slump** (CO2 block in x<20, no
+injection, t = 5e5 s):
+
+| run | nose advance | regime |
+|-----|--------------|--------|
+| wombat, capillary **off** | 4.75 m (= `v_N·t`) | slope-only, barely spreads |
+| wombat, capillary **on**  | 29.25 m | strongly spreading |
+| MRST | 49.75 m | strongly spreading |
+
+and on the injection inlet saturation: wombat cap-off 0.0913 -> cap-on 0.0595 -> MRST
+0.046 (same direction, ~60% of the gap closed by enabling the term). The residual
+(0.0595 vs 0.046) is second-order -- exact spreading coefficient, numerical diffusion,
+time step -- not a regime difference. The earlier characterisation of this as an
+"inherent formulation difference" was wrong: it is a **configuration mismatch** in
+which flux terms are active.
+
+**Therefore, for a fair cross-code comparison, enable wombat's two-pressure capillary
+flux** -- add `capillary = true` to the CO2 `VEFVAdvectiveFlux` and a `VEFVCapPressure`
+functor material (`sat_n`, `z_top`, `z_bottom`, `S_wr`, `gravity = '0 0 -9.81'`); see
+`test/tests/capillary_equilibrium/cap_equilibrium_fv.i` for the wiring. Do this in
+**both** the nc_sloped and anticline wombat inputs before comparing against MRST.
+(Geometry was ruled out as a cause -- `Gt.cells.z` span 3.47 = 0.0349·99.5 and cell
+`dz/dx = -0.0349` both correct; the buoyancy *coefficient* matches. It was the
+spreading term, not the slope term, that differed.)
+
+### MRST setup gotchas (learned the hard way)
+
+- **`makeVEFluid` CO2 is a real compressible EOS**, not constant density: rho = 700
+  only near ~93 bar; at 0.3 bar it collapses to ~1.8 kg/m3. wombat's
+  `ConstantFluidProperties` is pressure-independent. Running MRST at wombat's
+  `p = 0`-referenced pressures makes the same injected mass occupy ~60-70x the pore
+  volume and flood the domain (distortion scales as 1/pressure). To match a
+  constant-density verification case, force incompressible:
+  `fluid.bG = @(p,varargin) 1+0*p; fluid.bW = @(p,varargin) 1+0*p;`. For real field
+  cases keep the EOS and run at true depth pressure.
+- **Phase order is black-oil:** `s(:,1) = water, s(:,2) = CO2`; all-brine IC is
+  `initResSol(Gt, p, [1,0])` and you must set `state0.sGmax = state0.s(:,2)`.
+- **`poreVolume(Gt, rock2D)` for a top-surface grid is `poro*AREA` and omits H.**
+  CO2 volume = `sum(s .* poreVolume(Gt,rock2D) .* Gt.cells.H)`.
+- **Verify injection from `wellSols`:** `qGs`/`ComponentTotalFlux` are the true
+  surface rate/mass; the `flux` field is reservoir volume, so `flux(2)/qGs = 1/bG`
+  flags an over-expanded (low-pressure) CO2.
+- **Wells can't change count between control periods** -- shut injection with
+  `W.val = 0`, not `W = []`.
+
+## The broader lesson: matching a reference is a physics-configuration problem
+
+The hardest part of this benchmark was not the solver, the mesh, or the numerics --
+it was discovering *which physics each code had switched on*. The migration mismatch
+came down to a single flux term (`Δρ·g·∂h/∂x`) that one code includes by construction
+and the other treats as optional. Cross-code comparison is, in large part, the work of
+reconciling these modelling choices, and they are rarely written on the tin. Expect to
+iterate: match mass first, then isolate each physics term with a stripped-down case
+(the pure-buoyancy slump here) until the remaining difference is explained.
+
+This cuts in a way that is worth stating explicitly, because it is a genuine strength of
+building on MOOSE rather than a nuisance:
+
+**wombat can dial individual physics terms in and out, so the *same* model can be made
+to match very different references.** The Nordbotten-Celia case has two legitimate
+"correct" answers depending on what you are comparing against:
+
+- **To match the analytic solution**, capillary must be **off**. The closed-form nose
+  velocity `v_N = K·Δρ·g·sin(theta)/(phi·mu_n)` is the sharp-tongue, slope-only result;
+  it deliberately omits hydrostatic spreading. wombat with `capillary = false`
+  reproduces it (nose advance = `v_N·t` to within first-order-upwind diffusion). This is
+  the regression test `test/tests/nordbotten_celia/nc_sloped_fv.i`.
+- **To match MRST**, capillary must be **on**, because MRST's VE model carries
+  `Pc = Δρ·g·h` intrinsically and cannot remove it. wombat with `capillary = true` enters
+  the same spreading-dominated regime.
+
+Same governing code, same mesh, opposite settings of one switch -- each correct for its
+target. A monolithic code with the spreading term hard-wired (either always on, like
+MRST, or always off) could match only one of these references; it could never be
+verified against the analytic `v_N` *and* cross-checked against MRST without editing
+source. The fine-grained physics control that makes the matching take a few iterations
+is exactly what lets wombat sit on every rung of the verification ladder -- analytic at
+the bottom, cross-code in the middle, full field physics at the top -- using one model
+with different terms enabled. The cost is that you must know, and document, which terms
+are active for each comparison; that is what these benchmark inputs and this page record.
