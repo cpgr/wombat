@@ -1,0 +1,39 @@
+[Tests]
+  design = 'benchmarks/cross_code.md'
+  issues = '#1'
+
+  [anticline_grid_generator]
+    type = RunApp
+    input = 'anticline_grid_generator.i'
+    # Writes anticline_grid_generator_out.e: the shared 2D top-surface VE grid
+    # (nodal z_top/H, elemental phi_bar/K_up) reproduced identically in MRST co2lab.
+    requirement = 'The app shall write the shared conceptual-anticline VE grid as a 2D '
+                  'Exodus mesh for the MRST co2lab cross-code benchmark.'
+  []
+
+  [anticline_a1_smoke]
+    type = RunApp
+    input = 'anticline_a1.i'
+    prereq = 'anticline_grid_generator'
+    # Smoke run: proves the cross-code Tier A1 pipeline assembles and steps end-to-end
+    # on the shared mesh (geometry read from Exodus -> VE flux solve -> benchmark PPs).
+    requirement = 'The VE solver shall read the shared anticline grid from Exodus and run '
+                  'the Tier A1 constant-density migration problem end-to-end.'
+  []
+
+  # --- TODO: cross-code verification (needs the MRST co2lab reference) ---
+  # Once reference/anticline_reference_mobile_mass.csv is produced from co2lab (see
+  # reference/README.md), switch anticline_a1 to a CSVDiff against the matched
+  # mobile-CO2-mass-vs-time series, on the FULL run (FV path, 500 yr). Replace the
+  # smoke test above with, e.g.:
+  #
+  # [anticline_a1]
+  #   type = CSVDiff
+  #   input = 'anticline_a1.i'
+  #   csvdiff = 'anticline_a1_csv.csv'
+  #   prereq = 'anticline_grid_generator'
+  #   rel_err = 3.0e-2          # percent-level cross-code tolerance, not regression
+  #   requirement = 'The VE mobile-CO2-mass history shall agree with the MRST co2lab '
+  #                 'reference to within 3% over a 500 yr conceptual-anticline migration.'
+  # []
+[]
