@@ -17,6 +17,13 @@
     prereq = 'anticline_grid_generator'
     # Smoke run: proves the cross-code Tier A1 pipeline assembles and steps end-to-end
     # on the shared mesh (geometry read from Exodus -> VE flux solve -> benchmark PPs).
+    #
+    # TODO (later): make this a proper fast test by SHORTENING the run on the CLI
+    # rather than executing the full ~200 yr migration. The input's end_time is
+    # 6.3e9 s; for a regression smoke test cap it to a handful of steps, e.g.
+    #     cli_args = 'Executioner/num_steps=3'
+    # (or a small Executioner/end_time). Keep the full-length run for the actual
+    # cross-code CSVDiff below.
     requirement = 'The VE solver shall read the shared anticline grid from Exodus and run '
                   'the Tier A1 constant-density migration problem end-to-end.'
   []
