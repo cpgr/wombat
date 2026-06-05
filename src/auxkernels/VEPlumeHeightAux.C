@@ -7,7 +7,7 @@ VEPlumeHeightAux::validParams()
 {
   InputParameters params = AuxKernel::validParams();
   params.addClassDescription(
-      "Exposes the ve_h material property (CO2 plume thickness [m]) computed by "
+      "Exposes the ve_h material property (CO2 plume thickness (m)) computed by "
       "VEPlumeReconstruction as an elemental AuxVariable for output and postprocessing.");
 
   params.set<bool>("use_displaced_mesh") = false;

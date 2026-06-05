@@ -12,7 +12,7 @@ VEPlumeReconstruction::validParams()
       "sharp_interface mode: h = sat_n * H / (1 - S_wr). "
       "capillary_fringe mode: Newton inversion of the vertically-integrated "
       "capillary-gravity equilibrium profile using a PorousFlowCapillaryPressure "
-      "UserObject (Nordbotten & Dahle 2011). Result is clamped to [0, H].");
+      "UserObject (Nordbotten & Dahle 2011). Result is clamped to (0, H).");
 
   MooseEnum modes("sharp_interface capillary_fringe", "sharp_interface");
   params.addParam<MooseEnum>(
@@ -20,7 +20,7 @@ VEPlumeReconstruction::validParams()
 
   params.addRequiredCoupledVar("sat_n", "Depth-averaged CO2 saturation (primary variable).");
   params.addRangeCheckedParam<Real>(
-      "S_wr", "S_wr >= 0 & S_wr < 1", "Residual water saturation in the CO2 zone [-].");
+      "S_wr", "S_wr >= 0 & S_wr < 1", "Residual water saturation in the CO2 zone (-).");
 
   params.addParam<UserObjectName>(
       "pc_uo",
@@ -29,7 +29,7 @@ VEPlumeReconstruction::validParams()
   params.addParam<RealVectorValue>(
       "gravity",
       RealVectorValue(0.0, 0.0, -9.81),
-      "Gravity vector [m/s2] (capillary_fringe mode only). Defaults to (0, 0, -9.81).");
+      "Gravity vector (m/s2) (capillary_fringe mode only). Defaults to (0, 0, -9.81).");
 
   params.set<bool>("use_displaced_mesh") = false;
   params.suppressParameter<bool>("use_displaced_mesh");

@@ -20,16 +20,16 @@ VEFVAdvectiveOutflowBC::validParams()
       "Fluid phase index (0 = CO2, 1 = brine).");
   RealVectorValue g_default(0.0, 0.0, -9.81);
   params.addParam<RealVectorValue>("gravity", g_default,
-      "Gravity vector [m/s2]. Only the magnitude enters the buoyancy term. Must "
+      "Gravity vector (m/s2). Only the magnitude enters the buoyancy term. Must "
       "match the VEFVAdvectiveFlux setting.");
 
   params.addRequiredParam<MooseFunctorName>("pp_top",
-      "Pore pressure at the top surface [Pa]. Its boundary-face-normal gradient "
+      "Pore pressure at the top surface (Pa). Its boundary-face-normal gradient "
       "(which picks up the pp_top Dirichlet BC) is the Darcy pressure drive.");
   params.addRequiredParam<MooseFunctorName>("z_top",
-      "Top-surface elevation z_T [m] as an FV variable. Supplies H and grad(z_T).");
+      "Top-surface elevation z_T (m) as an FV variable. Supplies H and grad(z_T).");
   params.addRequiredParam<MooseFunctorName>("z_bottom",
-      "Bottom-surface elevation z_B [m] as an FV variable. H = z_top - z_bottom.");
+      "Bottom-surface elevation z_B (m) as an FV variable. H = z_top - z_bottom.");
 
   // Two ghost layers so functor gradient reconstruction is available across the
   // boundary face, including in parallel (matches VEFVAdvectiveFlux).

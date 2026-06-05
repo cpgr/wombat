@@ -20,7 +20,7 @@ VEFlowFV::validParams()
       "finite volume method. Creates the FV primary variables, the geometry (and dissolution) "
       "aux variables, the FV flow kernels, the elemental material chain, and the functor "
       "materials. If the user pre-declares z_top / z_bottom they must be MooseVariableFVReal; "
-      "SMP full=true stays in the user's [Preconditioning] block.");
+      "SMP full=true stays in the user's (Preconditioning) block.");
   params.addParam<unsigned short>(
       "ghost_layers", 2, "Number of ghosting layers for distributed parallel runs.");
 

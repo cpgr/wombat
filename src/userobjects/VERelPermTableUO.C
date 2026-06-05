@@ -18,12 +18,12 @@ VERelPermTableUO::validParams()
   // Inline table (self-contained input). Optional: omit when using data_file.
   params.addParam<std::vector<Real>>(
       "sat_n_points",
-      "Depth-averaged CO2 saturation sample points [-], strictly increasing, "
+      "Depth-averaged CO2 saturation sample points (-), strictly increasing, "
       "defining the x-axis shared by both relperm tables. Inline alternative to data_file.");
   params.addParam<std::vector<Real>>(
-      "krn_points", "CO2 (non-wetting) relative permeability at sat_n_points [-].");
+      "krn_points", "CO2 (non-wetting) relative permeability at sat_n_points (-).");
   params.addParam<std::vector<Real>>(
-      "krw_points", "Brine (wetting) relative permeability at sat_n_points [-].");
+      "krw_points", "Brine (wetting) relative permeability at sat_n_points (-).");
 
   // File table (keeps a large upscaled table out of the input file).
   params.addParam<FileName>(

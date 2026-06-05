@@ -14,9 +14,9 @@ VEFVMassTimeDerivative::validParams()
       "Fluid phase index (0 = CO2, 1 = brine). Use fluid_phase=0 on variable=sat_n "
       "and fluid_phase=1 on variable=pp_top.");
   params.addRequiredCoupledVar("z_top",
-      "Top-surface elevation z_T [m] as an FV variable. H = z_top - z_bottom.");
+      "Top-surface elevation z_T (m) as an FV variable. H = z_top - z_bottom.");
   params.addRequiredCoupledVar("z_bottom",
-      "Bottom-surface elevation z_B [m] as an FV variable. H = z_top - z_bottom.");
+      "Bottom-surface elevation z_B (m) as an FV variable. H = z_top - z_bottom.");
   return params;
 }
 

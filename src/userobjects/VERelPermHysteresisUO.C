@@ -17,13 +17,13 @@ VERelPermHysteresisUO::validParams()
       "VERelPerm / VEFVRelPerm adapters).");
 
   params.addRangeCheckedParam<Real>(
-      "S_wr", 0.0, "S_wr >= 0 & S_wr < 1", "Residual water saturation in the CO2 zone [-].");
-  params.addParam<Real>("krn_max", 1.0, "Maximum CO2 (non-wetting) relative permeability [-].");
-  params.addParam<Real>("krw_max", 1.0, "Maximum brine (wetting) relative permeability [-].");
+      "S_wr", 0.0, "S_wr >= 0 & S_wr < 1", "Residual water saturation in the CO2 zone (-).");
+  params.addParam<Real>("krn_max", 1.0, "Maximum CO2 (non-wetting) relative permeability (-).");
+  params.addParam<Real>("krw_max", 1.0, "Maximum brine (wetting) relative permeability (-).");
   params.addRequiredRangeCheckedParam<Real>(
       "S_gr_max",
       "S_gr_max > 0 & S_gr_max < 1",
-      "Maximum residually trapped CO2 saturation after full drainage [-]. Must be "
+      "Maximum residually trapped CO2 saturation after full drainage (-). Must be "
       "< 1 - S_wr (checked in the constructor). Sets the Land coefficient.");
 
   return params;

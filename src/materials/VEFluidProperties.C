@@ -9,7 +9,7 @@ VEFluidProperties::validParams()
   InputParameters params = Material::validParams();
   params.addClassDescription(
       "Two-phase (non-wetting / wetting) fluid properties from FluidProperties "
-      "UserObjects. Provides ve_density and ve_viscosity (size 2: [non-wetting, wetting]) "
+      "UserObjects. Provides ve_density and ve_viscosity (size 2: (non-wetting, wetting)) "
       "evaluated at the top-surface pore pressure pp_top and a constant temperature. Use "
       "ConstantFluidProperties for verification cases and CO2FluidProperties / "
       "BrineFluidProperties (or any SinglePhaseFluidProperties) for a full EOS, without "
@@ -24,12 +24,12 @@ VEFluidProperties::validParams()
       "SinglePhaseFluidProperties UserObject for the wetting phase (phase 1, "
       "typically brine).");
   params.addRequiredCoupledVar(
-      "pp_top", "Pore pressure at the top of the formation [Pa]; the top-surface EOS pressure.");
+      "pp_top", "Pore pressure at the top of the formation (Pa); the top-surface EOS pressure.");
   params.addRangeCheckedParam<Real>(
       "temperature",
       313.15,
       "temperature > 0",
-      "Formation temperature [K], used only to evaluate the fluid properties (isothermal). "
+      "Formation temperature (K), used only to evaluate the fluid properties (isothermal). "
       "Ignored by ConstantFluidProperties.");
 
   MooseEnum eos_reference_depth("top_surface interface", "top_surface");
@@ -41,7 +41,7 @@ VEFluidProperties::validParams()
       "-- reproduces existing golds bit-for-bit. interface: evaluate at the CO2-brine "
       "contact z_T + h, using the hydrostatic pressure p = pp_top + rho_n(pp_top)*|g|*h "
       "through the CO2 column, with the sharp-interface thickness h = sat_n*H/(1-S_wr) "
-      "clamped to [0, H]. The increment uses the top-surface CO2 density (a single, "
+      "clamped to (0, H). The increment uses the top-surface CO2 density (a single, "
       "non-iterated hydrostatic step; CO2 compressibility over a thin plume column is "
       "small). Requires sat_n and S_wr; reads ve_H from VEGeometry.");
 
@@ -51,23 +51,23 @@ VEFluidProperties::validParams()
       "where it sets the sharp-interface plume thickness h = sat_n*H/(1-S_wr).");
   params.addCoupledVar(
       "z_top",
-      "Top-surface elevation z_T [m]. Required only for eos_reference_depth=interface "
+      "Top-surface elevation z_T (m). Required only for eos_reference_depth=interface "
       "(with z_bottom, gives H = z_top - z_bottom). Coupled directly here -- not read "
       "from VEGeometry's ve_H -- so interface mode works in FV models too, which build "
       "H inline and do not run VEGeometry.");
   params.addCoupledVar(
       "z_bottom",
-      "Bottom-surface elevation z_B [m]. Required only for eos_reference_depth=interface "
+      "Bottom-surface elevation z_B (m). Required only for eos_reference_depth=interface "
       "(with z_top, gives H = z_top - z_bottom).");
   params.addRangeCheckedParam<Real>(
       "S_wr",
       "S_wr >= 0 & S_wr < 1",
-      "Residual water saturation in the CO2 zone [-]. Required only for "
+      "Residual water saturation in the CO2 zone (-). Required only for "
       "eos_reference_depth=interface; must match VEPlumeReconstruction.");
   params.addParam<RealVectorValue>(
       "gravity",
       RealVectorValue(0.0, 0.0, -9.81),
-      "Gravity vector [m/s2]. Only the magnitude |g| is used, for the hydrostatic "
+      "Gravity vector (m/s2). Only the magnitude |g| is used, for the hydrostatic "
       "pressure increment in eos_reference_depth=interface mode.");
 
   params.set<bool>("use_displaced_mesh") = false;

@@ -8,14 +8,14 @@ VETrappedCO2MassPostprocessor::validParams()
   InputParameters params = ElementIntegralPostprocessor::validParams();
   params.addClassDescription(
       "Integrates rho_co2 * phi_bar * H * sat_n_trap over the domain "
-      "to give the total residually trapped CO2 mass [kg].");
+      "to give the total residually trapped CO2 mass (kg).");
 
   params.addCoupledVar("sat_n_trap",
                        0.0,
-                       "Depth-averaged residually trapped CO2 saturation [-].  "
+                       "Depth-averaged residually trapped CO2 saturation (-).  "
                        "Couple to the AuxVariable written by VEHysteresis; "
                        "defaults to zero until hysteresis is active.");
-  params.addRequiredParam<Real>("rho_co2", "CO2 density [kg/m^3].");
+  params.addRequiredParam<Real>("rho_co2", "CO2 density (kg/m^3).");
 
   return params;
 }

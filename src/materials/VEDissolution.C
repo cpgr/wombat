@@ -8,7 +8,7 @@ VEDissolution::validParams()
   InputParameters params = Material::validParams();
   params.addClassDescription(
       "Convective CO2 dissolution rate ve_dissolution_rate = q0 * gate(sat_n) * "
-      "capacity(c_diss) [kg/m^2/s], an areal mass flux consumed by VEDissolutionSink and "
+      "capacity(c_diss) (kg/m^2/s), an areal mass flux consumed by VEDissolutionSink and "
       "accumulated by VEDissolvedCO2Aux. q0 is the constant-flux convective rate; the gate "
       "rate-limits as the plume thins; the optional capacity factor stops dissolution at "
       "column CO2 saturation. Sink-only (Option A): dissolved CO2 is an immobile inventory.");
@@ -16,21 +16,21 @@ VEDissolution::validParams()
   params.addRequiredRangeCheckedParam<Real>(
       "dissolution_flux",
       "dissolution_flux >= 0",
-      "Constant-flux convective dissolution rate q0 per unit map-view area [kg/m^2/s].");
+      "Constant-flux convective dissolution rate q0 per unit map-view area (kg/m^2/s).");
   params.addRangeCheckedParam<Real>(
       "s_ref",
       0.05,
       "s_ref > 0",
-      "Gate reference CO2 saturation [-]: full dissolution for sat_n >= s_ref, tapering "
+      "Gate reference CO2 saturation (-): full dissolution for sat_n >= s_ref, tapering "
       "linearly to zero as sat_n -> 0 so the sink cannot over-deplete the free phase.");
   params.addCoupledVar(
       "dissolved_co2",
-      "Optional lagged areal dissolved CO2 mass c_diss [kg/m^2] (from VEDissolvedCO2Aux). "
+      "Optional lagged areal dissolved CO2 mass c_diss (kg/m^2) (from VEDissolvedCO2Aux). "
       "Supply together with c_cap to cap dissolution at the column CO2 capacity.");
   params.addRangeCheckedParam<Real>(
       "c_cap",
       "c_cap > 0",
-      "Column CO2 capacity [kg/m^2] (e.g. rho_brine*phi*H*X_sat). Dissolution stops as "
+      "Column CO2 capacity (kg/m^2) (e.g. rho_brine*phi*H*X_sat). Dissolution stops as "
       "c_diss -> c_cap. Requires dissolved_co2; omit both to disable the cap.");
 
   params.set<bool>("use_displaced_mesh") = false;

@@ -7,7 +7,7 @@ VEDissolvedCO2Aux::validParams()
 {
   InputParameters params = AuxKernel::validParams();
   params.addClassDescription(
-      "Accumulates the areal dissolved CO2 mass c_diss [kg/m^2]: "
+      "Accumulates the areal dissolved CO2 mass c_diss (kg/m^2): "
       "c_diss <- c_diss_old + ve_dissolution_rate*dt, advanced at TIMESTEP_END with the "
       "converged rate so it matches the implicit VEDissolutionSink (mass conservation). "
       "Integrate over the domain for the total dissolved CO2 mass.");

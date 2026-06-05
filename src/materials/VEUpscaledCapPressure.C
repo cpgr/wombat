@@ -26,14 +26,14 @@ VEUpscaledCapPressure::validParams()
   params.addParam<RealVectorValue>(
       "gravity",
       RealVectorValue(0.0, 0.0, -9.81),
-      "Gravity vector [m/s2]. Only the magnitude enters the buoyancy term.");
+      "Gravity vector (m/s2). Only the magnitude enters the buoyancy term.");
   params.addParam<Real>(
-      "pc_entry", 0.0, "Capillary entry/fringe pressure added at the plume top [Pa].");
+      "pc_entry", 0.0, "Capillary entry/fringe pressure added at the plume top (Pa).");
   params.addRangeCheckedParam<Real>(
       "S_wr",
       0.0,
       "S_wr >= 0 & S_wr < 1",
-      "Residual water saturation [-]. Used in sharp_interface mode; must match the value "
+      "Residual water saturation (-). Used in sharp_interface mode; must match the value "
       "used in VEPlumeReconstruction so that the partials are consistent with ve_h.");
 
   params.addParam<UserObjectName>(

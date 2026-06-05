@@ -8,16 +8,16 @@ VEDissolvedCO2MassPostprocessor::validParams()
   InputParameters params = ElementIntegralPostprocessor::validParams();
   params.addClassDescription(
       "Integrates rho_brine * phi_bar * H * (1 - sat_n) * X_co2 over the domain "
-      "to give the total dissolved CO2 mass [kg].");
+      "to give the total dissolved CO2 mass (kg).");
 
   params.addRequiredCoupledVar("sat_n",
                                "Depth-averaged CO2 saturation (primary variable).");
   params.addCoupledVar("X_co2",
                        0.0,
-                       "Dissolved CO2 mass fraction in brine [kg CO2 / kg brine].  "
+                       "Dissolved CO2 mass fraction in brine (kg CO2 / kg brine).  "
                        "Couple to the AuxVariable written by VEDissolution; "
                        "defaults to zero until dissolution is active.");
-  params.addRequiredParam<Real>("rho_brine", "Brine density [kg/m^3].");
+  params.addRequiredParam<Real>("rho_brine", "Brine density (kg/m^3).");
 
   return params;
 }

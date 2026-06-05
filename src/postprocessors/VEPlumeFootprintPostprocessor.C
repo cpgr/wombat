@@ -8,7 +8,7 @@ VEPlumeFootprintPostprocessor::validParams()
   InputParameters params = ElementIntegralPostprocessor::validParams();
   params.addClassDescription(
       "Integrates the 2-D area where sat_n exceeds a threshold, giving "
-      "the CO2 plume footprint [m^2].");
+      "the CO2 plume footprint (m^2).");
 
   params.addRequiredCoupledVar("sat_n",
                                "Depth-averaged CO2 saturation (primary variable).");

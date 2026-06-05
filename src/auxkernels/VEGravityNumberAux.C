@@ -13,21 +13,21 @@ VEGravityNumberAux::validParams()
 
   params.addRequiredCoupledVar(
       "k_v",
-      "Vertical permeability [m^2]. Either a constant (e.g. k_v = 1e-13) or a coupled "
+      "Vertical permeability (m^2). Either a constant (e.g. k_v = 1e-13) or a coupled "
       "AuxVariable carrying a spatially-varying field (e.g. an upscaled PERMZ read from "
       "the ex2ve mesh), so the VE-validity map honours the real vertical permeability.");
   params.addRequiredParam<Real>("delta_rho",
-                                "Density difference rho_brine - rho_CO2 [kg/m^3].");
-  params.addRequiredParam<Real>("mu_n", "CO2 (non-wetting phase) viscosity [Pa*s].");
+                                "Density difference rho_brine - rho_CO2 (kg/m^3).");
+  params.addRequiredParam<Real>("mu_n", "CO2 (non-wetting phase) viscosity (Pa*s).");
   params.addRequiredParam<Real>(
       "Q",
-      "Characteristic volumetric injection rate [m^3/s].  Used as the "
+      "Characteristic volumetric injection rate (m^3/s).  Used as the "
       "reference flow scale; typically the total well rate for the domain.");
   params.addRequiredParam<Real>("L",
-                                "Characteristic horizontal length of the domain [m].");
+                                "Characteristic horizontal length of the domain (m).");
   RealVectorValue g_default(0.0, 0.0, -9.81);
   params.addParam<RealVectorValue>(
-      "gravity", g_default, "Gravity vector [m/s^2]. Defaults to (0, 0, -9.81).");
+      "gravity", g_default, "Gravity vector (m/s^2). Defaults to (0, 0, -9.81).");
 
   params.set<bool>("use_displaced_mesh") = false;
   params.suppressParameter<bool>("use_displaced_mesh");

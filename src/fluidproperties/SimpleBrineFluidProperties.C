@@ -18,7 +18,7 @@ SimpleBrineFluidProperties::validParams()
   params.addRequiredRangeCheckedParam<Real>(
       "salt_mass_fraction",
       "salt_mass_fraction >= 0 & salt_mass_fraction < 1",
-      "Constant salt (NaCl) mass fraction of the brine [kg/kg].");
+      "Constant salt (NaCl) mass fraction of the brine (kg/kg).");
   params.addParam<UserObjectName>(
       "water_fp",
       "Optional water SinglePhaseFluidProperties UserObject passed through to the "

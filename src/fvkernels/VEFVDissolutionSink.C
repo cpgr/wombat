@@ -8,7 +8,7 @@ VEFVDissolutionSink::validParams()
   InputParameters params = FVElementalKernel::validParams();
   params.addClassDescription(
       "FV sink on the CO2 mass equation removing free-phase CO2 at the convective "
-      "dissolution rate ve_dissolution_rate [kg/m^2/s] (from VEDissolution). Assign to "
+      "dissolution rate ve_dissolution_rate (kg/m^2/s) (from VEDissolution). Assign to "
       "variable=sat_n. Residual contribution is +ve_dissolution_rate (a sink: free CO2 "
       "decreases). FV analogue of VEDissolutionSink; off by default -- add only when "
       "dissolution is active.");

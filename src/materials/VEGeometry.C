@@ -13,13 +13,13 @@ VEGeometry::validParams()
 
   params.addRequiredCoupledVar(
       "z_top",
-      "AuxVariable holding the top-surface elevation z_T [m]. "
+      "AuxVariable holding the top-surface elevation z_T (m). "
       "Must be LAGRANGE FIRST ORDER so that coupledGradient produces a non-zero "
       "ve_grad_z_top for the buoyancy drive.");
 
   params.addRequiredCoupledVar(
       "z_bottom",
-      "AuxVariable holding the bottom-surface elevation z_B [m]. "
+      "AuxVariable holding the bottom-surface elevation z_B (m). "
       "Must be LAGRANGE FIRST ORDER for a non-zero grad(H) (see ve_grad_H).");
 
   params.set<bool>("use_displaced_mesh") = false;

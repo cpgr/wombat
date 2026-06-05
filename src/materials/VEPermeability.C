@@ -7,12 +7,12 @@ VEPermeability::validParams()
 {
   InputParameters params = Material::validParams();
   params.addClassDescription(
-      "Provides depth-integrated upscaled permeability tensor ve_K_up [m3]. "
+      "Provides depth-integrated upscaled permeability tensor ve_K_up (m3). "
       "Each component accepts a scalar constant or a spatially varying AuxVariable.");
 
-  params.addRequiredCoupledVar("K_up_xx", "K_up tensor xx-component [m3].");
-  params.addRequiredCoupledVar("K_up_yy", "K_up tensor yy-component [m3].");
-  params.addCoupledVar("K_up_xy", 0.0, "K_up tensor off-diagonal xy-component [m3].");
+  params.addRequiredCoupledVar("K_up_xx", "K_up tensor xx-component (m3).");
+  params.addRequiredCoupledVar("K_up_yy", "K_up tensor yy-component (m3).");
+  params.addCoupledVar("K_up_xy", 0.0, "K_up tensor off-diagonal xy-component (m3).");
 
   params.set<bool>("use_displaced_mesh") = false;
   params.suppressParameter<bool>("use_displaced_mesh");

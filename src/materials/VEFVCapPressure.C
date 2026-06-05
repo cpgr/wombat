@@ -24,9 +24,9 @@ VEFVCapPressure::validParams()
   params.addRequiredParam<MooseFunctorName>(
       "sat_n", "Depth-averaged CO2 saturation functor (FV variable name).");
   params.addRequiredParam<MooseFunctorName>(
-      "z_top", "Top-surface elevation z_T functor [m].");
+      "z_top", "Top-surface elevation z_T functor (m).");
   params.addRequiredParam<MooseFunctorName>(
-      "z_bottom", "Bottom-surface elevation z_B functor [m].");
+      "z_bottom", "Bottom-surface elevation z_B functor (m).");
 
   MooseEnum modes("sharp_interface capillary_fringe", "sharp_interface");
   params.addParam<MooseEnum>(
@@ -40,19 +40,19 @@ VEFVCapPressure::validParams()
 
   params.addRangeCheckedParam<Real>(
       "S_wr", 0.0, "S_wr >= 0 & S_wr < 1",
-      "Residual water saturation [-]. Must match VEPlumeReconstruction and "
+      "Residual water saturation (-). Must match VEPlumeReconstruction and "
       "VEUpscaledCapPressure.");
   params.addParam<MooseFunctorName>(
       "density_nw", "ve_density_n",
-      "Non-wetting (CO2) density functor [kg/m3], typically from VEFVFluidProperties.");
+      "Non-wetting (CO2) density functor (kg/m3), typically from VEFVFluidProperties.");
   params.addParam<MooseFunctorName>(
       "density_w", "ve_density_w",
-      "Wetting (brine) density functor [kg/m3], typically from VEFVFluidProperties.");
+      "Wetting (brine) density functor (kg/m3), typically from VEFVFluidProperties.");
   params.addParam<RealVectorValue>(
       "gravity", RealVectorValue(0.0, 0.0, -9.81),
-      "Gravity vector [m/s2]. Only the magnitude is used.");
+      "Gravity vector (m/s2). Only the magnitude is used.");
   params.addParam<Real>(
-      "pc_entry", 0.0, "Constant capillary entry/fringe pressure offset [Pa].");
+      "pc_entry", 0.0, "Constant capillary entry/fringe pressure offset (Pa).");
 
   return params;
 }

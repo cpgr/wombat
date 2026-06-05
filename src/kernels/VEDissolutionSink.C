@@ -8,7 +8,7 @@ VEDissolutionSink::validParams()
   InputParameters params = ADKernelValue::validParams();
   params.addClassDescription(
       "Sink on the CO2 mass equation removing free-phase CO2 at the convective dissolution "
-      "rate ve_dissolution_rate [kg/m^2/s] (from VEDissolution). Assign to variable=sat_n. "
+      "rate ve_dissolution_rate (kg/m^2/s) (from VEDissolution). Assign to variable=sat_n. "
       "Residual contribution is +ve_dissolution_rate (a sink: free CO2 decreases). Off by "
       "default -- add only when dissolution is active.");
 

@@ -8,7 +8,7 @@ VESaturation::validParams()
   InputParameters params = Material::validParams();
   params.addClassDescription(
       "Wraps the primary variable sat_n into the two-element AD saturation vector "
-      "ve_saturation = [sat_n, 1 - sat_n] consumed by VE kernels and materials.");
+      "ve_saturation = (sat_n, 1 - sat_n) consumed by VE kernels and materials.");
 
   params.addRequiredCoupledVar(
       "sat_n",

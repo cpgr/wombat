@@ -17,16 +17,16 @@ VEFVAdvectiveFlux::validParams()
       "Fluid phase index (0 = CO2, 1 = brine).");
   RealVectorValue g_default(0.0, 0.0, -9.81);
   params.addParam<RealVectorValue>("gravity", g_default,
-      "Gravity vector [m/s2]. Only the magnitude enters the buoyancy term.");
+      "Gravity vector (m/s2). Only the magnitude enters the buoyancy term.");
 
   params.addRequiredParam<MooseFunctorName>("pp_top",
-      "Pore pressure at the top surface [Pa]. Its face-normal gradient is the "
+      "Pore pressure at the top surface (Pa). Its face-normal gradient is the "
       "Darcy pressure drive (carries AD derivatives wrt pp_top).");
   params.addRequiredParam<MooseFunctorName>("z_top",
-      "Top-surface elevation z_T [m] as an FV variable. Supplies H and the "
+      "Top-surface elevation z_T (m) as an FV variable. Supplies H and the "
       "buoyancy slope grad(z_T).");
   params.addRequiredParam<MooseFunctorName>("z_bottom",
-      "Bottom-surface elevation z_B [m] as an FV variable. H = z_top - z_bottom.");
+      "Bottom-surface elevation z_B (m) as an FV variable. H = z_top - z_bottom.");
 
   MooseEnum advected_interp_method("average upwind vanLeer min_mod sou quick venkatakrishnan",
                                    "upwind");
@@ -42,7 +42,7 @@ VEFVAdvectiveFlux::validParams()
       "If true, adds grad(Pc^up).n to the CO2 (fluid_phase=0) Darcy potential "
       "gradient as ve_dPcup_dsatn(face)*grad(sat_n).n + ve_dPcup_dH(face)*grad(H).n. "
       "Has no effect on the brine equation. Requires VEFVCapPressure in "
-      "[FunctorMaterials] (declares ve_dPcup_dsatn, ve_dPcup_dH). The grad(H).n term "
+      "(FunctorMaterials) (declares ve_dPcup_dsatn, ve_dPcup_dH). The grad(H).n term "
       "vanishes for constant thickness, so flat/constant-H golds are unchanged. "
       "Default OFF so existing inputs are unchanged.");
 

@@ -20,11 +20,11 @@ VECapillaryPressureTableUO::validParams()
   // Inline table (self-contained input). Optional: omit when using data_file.
   params.addParam<std::vector<Real>>(
       "pc_points",
-      "Capillary pressure values [Pa], strictly increasing from 0, defining the "
+      "Capillary pressure values (Pa), strictly increasing from 0, defining the "
       "x-axis of the Pc-Sw table. Inline alternative to data_file.");
   params.addParam<std::vector<Real>>(
       "sw_points",
-      "True water saturation values [-], strictly decreasing, in one-to-one "
+      "True water saturation values (-), strictly decreasing, in one-to-one "
       "correspondence with pc_points.");
 
   // File table (keeps a large upscaled table out of the input file).

@@ -17,7 +17,7 @@ VEAdvectiveFluxBase::validParams()
   params.addParam<RealVectorValue>(
       "gravity",
       g_default,
-      "Gravity vector [m/s2]. Defaults to (0, 0, -9.81). "
+      "Gravity vector (m/s2). Defaults to (0, 0, -9.81). "
       "Only the magnitude |g| enters the depth-integrated buoyancy term.");
 
   params.set<bool>("use_displaced_mesh") = false;

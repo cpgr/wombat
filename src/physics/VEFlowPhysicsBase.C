@@ -30,9 +30,9 @@ VEFlowPhysicsBase::validParams()
   // their values via an IC or by reading them from the mesh. Override a name to point at an
   // existing field (e.g. an Exodus nodal field), in which case the action skips declaration.
   params.addParam<VariableName>(
-      "z_top", "z_top", "Name of the top-surface elevation z_T [m] aux variable.");
+      "z_top", "z_top", "Name of the top-surface elevation z_T (m) aux variable.");
   params.addParam<VariableName>(
-      "z_bottom", "z_bottom", "Name of the bottom-surface elevation z_B [m] aux variable.");
+      "z_bottom", "z_bottom", "Name of the bottom-surface elevation z_B (m) aux variable.");
   params.addParam<bool>(
       "define_geometry_variables",
       true,
@@ -45,10 +45,10 @@ VEFlowPhysicsBase::validParams()
       "rather than relying on the action's declaration merging with yours.");
 
   // Petrophysics (constant for verification, or coupled fields on real cases).
-  params.addRequiredCoupledVar("phi_bar", "Depth-averaged porosity [-].");
-  params.addRequiredCoupledVar("K_up_xx", "Depth-integrated permeability K_up xx-component [m3].");
-  params.addRequiredCoupledVar("K_up_yy", "Depth-integrated permeability K_up yy-component [m3].");
-  params.addCoupledVar("K_up_xy", "Depth-integrated permeability K_up xy-component [m3] (default 0).");
+  params.addRequiredCoupledVar("phi_bar", "Depth-averaged porosity (-).");
+  params.addRequiredCoupledVar("K_up_xx", "Depth-integrated permeability K_up xx-component (m3).");
+  params.addRequiredCoupledVar("K_up_yy", "Depth-integrated permeability K_up yy-component (m3).");
+  params.addCoupledVar("K_up_xy", "Depth-integrated permeability K_up xy-component (m3) (default 0).");
 
   // Fluids.
   params.addRequiredParam<UserObjectName>(
@@ -58,7 +58,7 @@ VEFlowPhysicsBase::validParams()
   params.addRequiredParam<UserObjectName>(
       "relperm_uo", "VERelativePermeability UserObject providing the kr_c(sat_n) curves.");
   params.addRangeCheckedParam<Real>(
-      "temperature", 313.15, "temperature > 0", "Isothermal formation temperature [K].");
+      "temperature", 313.15, "temperature > 0", "Isothermal formation temperature (K).");
 
   MooseEnum eos_reference_depth("top_surface interface", "top_surface");
   params.addParam<MooseEnum>(
@@ -69,12 +69,12 @@ VEFlowPhysicsBase::validParams()
   params.addRangeCheckedParam<Real>(
       "S_wr",
       "S_wr >= 0 & S_wr < 1",
-      "Residual water saturation in the CO2 zone [-]. Required for eos_reference_depth=interface.");
+      "Residual water saturation in the CO2 zone (-). Required for eos_reference_depth=interface.");
 
   params.addParam<RealVectorValue>(
       "gravity",
       RealVectorValue(0.0, 0.0, -9.81),
-      "Gravity vector [m/s2]. Only the magnitude enters the buoyancy and interface-EOS terms.");
+      "Gravity vector (m/s2). Only the magnitude enters the buoyancy and interface-EOS terms.");
 
   // Convective dissolution. enable_dissolution = true fully wires it: the action creates
   // the VEDissolution material, the c_diss dissolved-mass aux variable, the VEDissolvedCO2Aux
@@ -88,22 +88,22 @@ VEFlowPhysicsBase::validParams()
   params.addParam<VariableName>(
       "dissolved_co2_variable",
       "c_diss",
-      "Name of the areal dissolved-CO2 mass aux variable [kg/m2] declared when "
+      "Name of the areal dissolved-CO2 mass aux variable (kg/m2) declared when "
       "enable_dissolution = true.");
   params.addRangeCheckedParam<Real>(
       "dissolution_flux",
       "dissolution_flux >= 0",
-      "Constant-flux convective dissolution rate q0 [kg/m2/s] (VEDissolution). REQUIRED when "
+      "Constant-flux convective dissolution rate q0 (kg/m2/s) (VEDissolution). REQUIRED when "
       "enable_dissolution = true.");
   params.addRangeCheckedParam<Real>(
       "dissolution_s_ref",
       "dissolution_s_ref > 0",
-      "Gate reference CO2 saturation [-] (VEDissolution s_ref). Optional; defaults to the "
+      "Gate reference CO2 saturation (-) (VEDissolution s_ref). Optional; defaults to the "
       "material default (0.05) if unset.");
   params.addRangeCheckedParam<Real>(
       "dissolution_c_cap",
       "dissolution_c_cap > 0",
-      "Optional column CO2 capacity [kg/m2] (VEDissolution c_cap); when set, the action wires "
+      "Optional column CO2 capacity (kg/m2) (VEDissolution c_cap); when set, the action wires "
       "the lagged dissolved_co2 = c_diss so dissolution tapers to zero as c_diss -> c_cap.");
   params.addParamNamesToGroup("enable_dissolution dissolved_co2_variable dissolution_flux "
                               "dissolution_s_ref dissolution_c_cap",
@@ -121,7 +121,7 @@ VEFlowPhysicsBase::validParams()
       "cap-pressure material(s) (FE: VEPlumeReconstruction + VEUpscaledCapPressure; "
       "FV: VEFVCapPressure).");
   params.addParam<Real>(
-      "pc_entry", 0.0, "Capillary entry/fringe pressure offset [Pa] (used when capillary != none).");
+      "pc_entry", 0.0, "Capillary entry/fringe pressure offset (Pa) (used when capillary != none).");
   params.addParam<UserObjectName>(
       "pc_uo",
       "PorousFlowCapillaryPressure UserObject defining the upscaled column Sw(Pc) curve "
@@ -263,7 +263,7 @@ VEFlowPhysicsBase::checkRequiredFields()
       ".\nIf your model reads petrophysical/geometry fields from an Exodus mesh, rebuild the "
       "mesh file so it contains element or nodal fields with these exact names -- the upscaling "
       "workflow must emit z_top, z_bottom, phi_bar, K_up_xx, K_up_yy (and K_up_xy if anisotropic) "
-      "-- and read them via [AuxVariables] with initial_from_file_var. Otherwise supply them as "
+      "-- and read them via (AuxVariables) with initial_from_file_var. Otherwise supply them as "
       "constants or declare the variables yourself.");
 }
 
@@ -334,7 +334,7 @@ VEFlowPhysicsBase::checkGeometryNotUserDeclared() const
         paramError("define_geometry_variables",
                    "AuxVariable '",
                    vn,
-                   "' has already been declared in [AuxVariables], but this physics also "
+                   "' has already been declared in (AuxVariables), but this physics also "
                    "declares it because define_geometry_variables = true. Remove the "
                    "[AuxVariables/",
                    vn,

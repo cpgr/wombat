@@ -15,9 +15,9 @@ VERelPermSharpUO::validParams()
   params.addRangeCheckedParam<Real>("S_wr",
                                     0.0,
                                     "S_wr >= 0 & S_wr < 1",
-                                    "Residual water saturation in the CO2 zone [-].");
-  params.addParam<Real>("krn_max", 1.0, "Maximum CO2 (non-wetting) relative permeability [-].");
-  params.addParam<Real>("krw_max", 1.0, "Maximum brine (wetting) relative permeability [-].");
+                                    "Residual water saturation in the CO2 zone (-).");
+  params.addParam<Real>("krn_max", 1.0, "Maximum CO2 (non-wetting) relative permeability (-).");
+  params.addParam<Real>("krw_max", 1.0, "Maximum brine (wetting) relative permeability (-).");
   return params;
 }
 

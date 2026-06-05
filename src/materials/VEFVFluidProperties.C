@@ -23,12 +23,12 @@ VEFVFluidProperties::validParams()
       "SinglePhaseFluidProperties UserObject for the wetting phase (phase 1, "
       "typically brine).");
   params.addRequiredParam<MooseFunctorName>(
-      "pp_top", "Pore pressure at the top of the formation [Pa]; the top-surface EOS pressure.");
+      "pp_top", "Pore pressure at the top of the formation (Pa); the top-surface EOS pressure.");
   params.addRangeCheckedParam<Real>(
       "temperature",
       313.15,
       "temperature > 0",
-      "Formation temperature [K], used only to evaluate the fluid properties (isothermal). "
+      "Formation temperature (K), used only to evaluate the fluid properties (isothermal). "
       "Ignored by ConstantFluidProperties.");
 
   MooseEnum eos_reference_depth("top_surface interface", "top_surface");
@@ -39,7 +39,7 @@ VEFVFluidProperties::validParams()
       "top_surface (default): evaluate rho/mu at pp_top (formation top z_T) -- reproduces "
       "existing golds. interface: evaluate at the CO2-brine contact z_T + h, using the "
       "hydrostatic pressure p = pp_top + rho_n(pp_top)*|g|*h with the sharp-interface "
-      "thickness h = sat_n*(z_top - z_bottom)/(1 - S_wr) clamped to [0, H]. Requires the "
+      "thickness h = sat_n*(z_top - z_bottom)/(1 - S_wr) clamped to (0, H). Requires the "
       "sat_n, z_top and z_bottom functors. Mirrors VEFluidProperties.");
 
   params.addParam<MooseFunctorName>(
@@ -47,21 +47,21 @@ VEFVFluidProperties::validParams()
       "Depth-averaged CO2 saturation functor. Required only for "
       "eos_reference_depth=interface.");
   params.addParam<MooseFunctorName>(
-      "z_top", "Top-surface elevation z_T functor [m]. Required only for "
+      "z_top", "Top-surface elevation z_T functor (m). Required only for "
                "eos_reference_depth=interface (with z_bottom, gives H).");
   params.addParam<MooseFunctorName>(
-      "z_bottom", "Bottom-surface elevation z_B functor [m]. Required only for "
+      "z_bottom", "Bottom-surface elevation z_B functor (m). Required only for "
                   "eos_reference_depth=interface (with z_top, gives H).");
   params.addRangeCheckedParam<Real>(
       "S_wr",
       0.0,
       "S_wr >= 0 & S_wr < 1",
-      "Residual water saturation in the CO2 zone [-]. Used only in "
+      "Residual water saturation in the CO2 zone (-). Used only in "
       "eos_reference_depth=interface; must match VEPlumeReconstruction.");
   params.addParam<RealVectorValue>(
       "gravity",
       RealVectorValue(0.0, 0.0, -9.81),
-      "Gravity vector [m/s2]. Only |g| is used, for the hydrostatic increment in "
+      "Gravity vector (m/s2). Only |g| is used, for the hydrostatic increment in "
       "eos_reference_depth=interface mode.");
 
   return params;

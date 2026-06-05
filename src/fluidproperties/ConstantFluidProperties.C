@@ -12,9 +12,9 @@ ConstantFluidProperties::validParams()
       "VEFluidProperties in place of CO2FluidProperties / BrineFluidProperties.");
 
   params.addRequiredRangeCheckedParam<Real>(
-      "density", "density > 0", "Constant fluid density [kg/m3].");
+      "density", "density > 0", "Constant fluid density (kg/m3).");
   params.addRequiredRangeCheckedParam<Real>(
-      "viscosity", "viscosity > 0", "Constant dynamic viscosity [Pa*s].");
+      "viscosity", "viscosity > 0", "Constant dynamic viscosity (Pa*s).");
 
   return params;
 }
