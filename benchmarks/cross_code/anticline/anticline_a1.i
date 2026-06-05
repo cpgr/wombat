@@ -16,7 +16,7 @@
 # Physics (must match co2lab exactly):
 #   sharp interface, S_wr = 0.2
 #   rho_CO2 = 700, rho_brine = 1000 kg/m^3   mu_CO2 = 6e-5, mu_brine = 8e-4 Pa.s
-#   capillary off, dissolution off, trapping off
+#   capillary ON (two-pressure spreading term, to match MRST), dissolution off, trapping off
 #
 # Geometry: +x is updip; CO2 injected at the downdip (x = 0) edge migrates +x and
 # pools under the dome crest near x = 7 km.
@@ -75,7 +75,14 @@
 [UserObjects]
   [relperm_uo]
     type = VERelPermSharpUO
-    S_wr = 0.2
+    # S_wr = 0 here gives the SIMPLE (non-renormalised) sharp curves kr_n = sat_n,
+    # kr_w = 1 - sat_n, matching MRST co2lab's 'sharp_interface_simple' relperm
+    # (krG = sG, krW = sw). The renormalised form (S_wr = 0.2 -> kr_n = sat_n/0.8)
+    # is more accurate but drives kr_w -> 0 at a filled column, which stalls MRST's
+    # stock solver; the simple form keeps kr_w >= 0.2 and lets both codes complete.
+    # The physical residual (0.2) is still applied to the column height via the
+    # capillary material [FunctorMaterials/cap_pressure] (S_wr = 0.2).
+    S_wr = 0.0
     krn_max = 1.0
     krw_max = 1.0
   []
@@ -219,6 +226,12 @@
     pp_top = pp_top
     z_top = z_top_fv
     z_bottom = z_bottom_fv
+    # Two-pressure capillary flux ON: activates the hydrostatic spreading term
+    # delta_rho*g*grad(h). MRST's CO2VEBlackOilTypeModel includes this
+    # intrinsically, so it must be on here for a like-for-like comparison --
+    # it controls how the plume spreads, fills, and spills the dome trap.
+    # (See doc/content/benchmarks/cross_code.md and the nordbotten_celia inputs.)
+    capillary = true
   []
   # Brine mass equation (variable: pp_top, phase 1).
   [brine_storage]
@@ -282,6 +295,7 @@
   [injection_window]
     type = TimePeriod
     enable_objects = 'FVBCs/co2_injection'
+    implicit = false
     start_time = 0.0
     end_time = 3.1557e8 # 10 yr
     set_sync_times = true
@@ -332,6 +346,18 @@
     fp_nw = co2_fp
     fp_w = brine_fp
     pp_top = pp_top
+  []
+  # Provides ve_dPcup_dsatn / ve_dPcup_dH for the capillary=true CO2 flux above.
+  # FV functor geometry (z_top_fv/z_bottom_fv) since it is evaluated on faces;
+  # S_wr = 0.2 matches the VERelPermSharpUO so the sharp-interface column height
+  # h = sat_n*H/(1-S_wr) is consistent between the relperm and the spreading term.
+  [cap_pressure]
+    type = VEFVCapPressure
+    sat_n = sat_n
+    z_top = z_top_fv
+    z_bottom = z_bottom_fv
+    S_wr = 0.2
+    gravity = '0 0 -9.81'
   []
 []
 

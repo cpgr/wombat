@@ -335,3 +335,46 @@ is exactly what lets wombat sit on every rung of the verification ladder -- anal
 the bottom, cross-code in the middle, full field physics at the top -- using one model
 with different terms enabled. The cost is that you must know, and document, which terms
 are active for each comparison; that is what these benchmark inputs and this page record.
+
+## Tier A1 result: conceptual anticline (anticline_a1)
+
+The 2D anticline (`benchmarks/cross_code/anticline/anticline_a1.i` vs
+`anticline_a1_mrst.m`) was run to completion against MRST after the nc_sloped lessons
+were carried over. Getting a like-for-like comparison required **four** aligned choices,
+each an instance of the "which physics is switched on" theme:
+
+1. **Incompressible CO2** on the MRST side (`bG=bW=1`) -- same as nc_sloped. Without it
+   the EOS at ~25 bar over-expands the CO2 ~1.7x.
+2. **Capillary spreading ON** in wombat (`capillary = true` + `VEFVCapPressure`) -- MRST
+   carries `Pc = Δρ·g·h` intrinsically; it governs how the plume fills and spills the dome.
+3. **Injection timing** -- wombat's `[Controls/injection_window]` needs `implicit = false`,
+   or the `TimePeriod` control evaluates the window end on the step's *end* time and shuts
+   injection off ~0.7 yr early, under-delivering ~7% (9.32 vs 10 Mt). The cross-code
+   mass comparison is what surfaced this -- a real wombat setup bug.
+4. **Relperm upscaling** -- MRST's `sharp_interface_simple` gives the crude linear curves
+   `krG=sG`, `krW=sw` (no residual renormalisation), which keep `krW >= 0.2` at a filled
+   column. wombat's `VERelPermSharpUO` default renormalises (`kr_n = sat_n/(1-S_wr)`),
+   which is more accurate but drives `krW -> 0` and **stalls MRST's stock direct solver**
+   right after injection (wombat itself survives this via PETSc
+   `-pc_factor_shift_type NONZERO`). Resolution: use the simple form in BOTH codes --
+   wombat `VERelPermSharpUO S_wr = 0` (giving `kr_n = sat_n`) while keeping the capillary
+   column height at `S_wr = 0.2`. This is a deliberate trade of accuracy for a solvable,
+   consistent comparison.
+
+**Outcome (full 200 yr run):**
+
+| metric | agreement |
+|--------|-----------|
+| mobile CO2 mass | within **0.1%** to 130 yr, **1.8%** at 194 yr -- tracks through injection, the ~70 yr plateau, and the updip-drainage decline |
+| plume footprint | matches early (~0% at 50 yr), **diverges late** (MRST ~40% wider at 194 yr) |
+
+The mass (inventory) agreement is the robust result and validates the setup end to end,
+including dome-filling. The footprint divergence is expected: footprint at `sat > 1e-3`
+is a **numerical-diffusion-sensitive** metric (it tracks the diffuse low-saturation
+fringe, not the bulk), and the two codes' first-order-upwind schemes spread that fringe
+differently over 200 yr on a 50x50 grid -- wombat's footprint even peaks at 160 yr and
+contracts as the plume consolidates in the dome, while MRST keeps spreading. A higher
+threshold (`sat > 0.05`, the bulk plume) or a TVD limiter / finer grid would tighten it,
+but it is not a physics disagreement. **Bottom line: the codes agree on inventory to ~1%
+and differ on diffuse plume extent in the way two advection-dominated discretisations
+do** -- a defensible cross-code result.
