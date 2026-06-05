@@ -49,4 +49,19 @@
                   'a relative error of 1e-5, confirming the hysteretic relperm does not '
                   'perturb drainage and that the FV sat_n_max wiring is correct.'
   []
+
+  [imbibition_trapping_fv]
+    type = CSVDiff
+    input = 'imbibition_trapping_fv.i'
+    csvdiff = 'imbibition_trapping_fv_csv.csv'
+    rel_err = 1.0e-5
+    requirement = 'A FV drainage -> imbibition cycle shall demonstrate residual CO2 '
+                  'trapping in a real transient solve: trapped_volume shall be zero '
+                  'throughout the drainage phase, increase monotonically once brine '
+                  'enters from the left (Phase 2), and reach 2.25 m by t = 40000 s, '
+                  'while co2_volume (total CO2 in domain) stays constant, confirming '
+                  'that the imbibition scanning curve immobilises CO2 without violating '
+                  'mass balance. smax_max_pp shall be pinned at the drainage turning '
+                  'point throughout Phase 2 (VESaturationMaxAux frozen after drainage).'
+  []
 []
