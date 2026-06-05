@@ -74,7 +74,8 @@ VEFVAdvectiveFlux::VEFVAdvectiveFlux(const InputParameters & parameters)
                                                  : nullptr),
     _dPcup_dH(_capillary && _fluid_phase == 0 ? &getFunctor<ADReal>("ve_dPcup_dH")
                                               : nullptr),
-    _K_up(getMaterialProperty<RealTensorValue>("ve_K_up"))
+    _K_up(getMaterialProperty<RealTensorValue>("ve_K_up")),
+    _K_up_neighbor(getNeighborMaterialProperty<RealTensorValue>("ve_K_up"))
 {
   // VE is always a two-phase CO2-brine system (phase 0 = CO2, 1 = brine).
   if (_fluid_phase > 1)
@@ -95,8 +96,21 @@ VEFVAdvectiveFlux::computeQpResidual()
   const ADReal grad_zt_n = _z_top.gradient(face, state) * _normal;
   const ADReal grad_pp_n = _pp_top.gradient(face, state) * _normal;
 
-  // --- Permeability projected on the face normal (constant -> elem-side) ---
-  const Real K_nn = _normal * (_K_up[_qp] * _normal);
+  // --- Permeability projected on the face normal ---
+  // On interior faces use a distance-weighted harmonic mean (TPFA two-point
+  // transmissibility), which is the correct face transmissibility for
+  // discontinuous permeability. Harmonic averaging is exact for piecewise-constant
+  // K fields and reduces to K itself for uniform fields (no gold impact).
+  // On boundary faces use the elem-side value; the BC handles the other side.
+  Real K_nn;
+  if (_var.isInternalFace(*_face_info))
+  {
+    const Real K_nn_elem = _normal * (_K_up[_qp] * _normal);
+    const Real K_nn_nbr  = _normal * (_K_up_neighbor[_qp] * _normal);
+    interpolate(InterpMethod::HarmonicAverage, K_nn, K_nn_elem, K_nn_nbr, *_face_info, true);
+  }
+  else
+    K_nn = _normal * (_K_up[_qp] * _normal);
 
   // --- Darcy potential gradient . normal, and advecting flux ---
   // Density and viscosity are smooth in pressure, so they are taken at the same

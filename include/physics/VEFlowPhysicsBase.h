@@ -78,6 +78,17 @@ protected:
   /// (for the buoyancy gradient); FV requires a MooseVariableFVReal.
   virtual void checkGeometryVariableType(const VariableName & var_name) const = 0;
 
+  /// Verify a present petrophysics variable (phi_bar, K_up_xx, etc.) is the right kind
+  /// for this discretization. Default: no-op. FV overrides to require MooseVariableFVReal,
+  /// because VEPermeability/VEPorosity use getNeighborMaterialProperty -- which evaluates
+  /// coupledValue() on the neighbour element -- and a regular FE AuxVariable is not
+  /// reinitialised on FV faces, causing the neighbour value to read as zero and collapsing
+  /// the harmonic K face average to zero (silently kills the advective flux).
+  virtual void checkPetrophysicsVariableType(const std::string & /*param_name*/,
+                                              const VariableName & /*var_name*/) const
+  {
+  }
+
   /// When define_geometry_variables = true, error if the user has also declared z_top/z_bottom
   /// in [AuxVariables] (a conflicting double declaration). Detected from the ActionWarehouse.
   void checkGeometryNotUserDeclared() const;

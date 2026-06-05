@@ -38,8 +38,13 @@
  * density out of the monotone-limited advection and avoids the circular dependence
  * between the upwind direction and the buoyancy term. For constant fluid properties
  * the face average reduces to that constant, so this is exact and changes nothing.
- * (K is still taken elem-side; revisit harmonic K averaging when heterogeneous K is
- * introduced.)
+ *
+ * K_nn uses a distance-weighted harmonic mean on interior faces
+ * (TwoMaterialPropertyInterface / getNeighborMaterialProperty), matching the TPFA
+ * two-point transmissibility for discontinuous permeability fields. On boundary
+ * faces the elem-side K is used (the BC supplies the other flux contribution). For
+ * uniform K fields the harmonic mean equals K itself, so all existing golds are
+ * unchanged.
  */
 class VEFVAdvectiveFlux : public FVFluxKernel
 {
@@ -78,6 +83,10 @@ protected:
   /// grad(Pc^up).n.
   const Moose::Functor<ADReal> * const _dPcup_dH;
 
-  // --- Elem-side material property (constant; valid on boundary faces) ---
+  // --- Permeability tensor (elem-side + neighbor-side for harmonic face averaging) ---
+  /// Upscaled permeability tensor on the element side.
   const MaterialProperty<RealTensorValue> & _K_up;
+  /// Upscaled permeability tensor on the neighbor side (via TwoMaterialPropertyInterface).
+  /// Only read on interior faces (isInternalFace check); not valid on boundary faces.
+  const MaterialProperty<RealTensorValue> & _K_up_neighbor;
 };

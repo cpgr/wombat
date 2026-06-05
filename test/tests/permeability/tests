@@ -14,4 +14,30 @@
                   'div(K grad p)=0 only because of Kxy) shall be recovered exactly, '
                   'pp(0.5,0.5) = 9.'
   []
+
+  [het_k_harmonic_fv]
+    type = CSVDiff
+    input = 'het_k_harmonic_fv.i'
+    csvdiff = 'het_k_harmonic_fv_csv.csv'
+    rel_err = 1.0e-8
+    requirement = 'VEFVAdvectiveFlux shall use the harmonic mean of the element and '
+                  'neighbour K_up values at interior faces: for a two-cell 1-D mesh with '
+                  'K1 = 1e-10 m^2 (left) and K2 = 1e-12 m^2 (right) and Dirichlet '
+                  'pressure BCs of 1e5 Pa (left) and 0 Pa (right), the steady-state cell '
+                  'pressures shall match the analytic TPFA harmonic solution '
+                  'p1 = 1e5*201/202 = 99504.95 Pa and p2 = 1e5*100/202 = 49504.95 Pa. '
+                  'K_up_xx and K_up_yy must be MooseVariableFVReal; the VEFlowFV physics '
+                  'action shall error if a non-FV variable is supplied.'
+  []
+
+  [err_fv_petrophysics_fe_variable]
+    type = RunException
+    input = 'het_k_bad_type_fv.i'
+    expect_err = 'is not a finite-volume variable'
+    requirement = 'VEFlowFV shall error if a petrophysics variable (K_up_xx, K_up_yy, '
+                  'K_up_xy, phi_bar) supplied as a variable name is not a '
+                  'MooseVariableFVReal, since a regular FE aux is not reinitialised on FV '
+                  'neighbour elements and would silently collapse the harmonic K face '
+                  'average to zero.'
+  []
 []

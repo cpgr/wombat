@@ -107,6 +107,29 @@ VEFlowFV::checkGeometryVariableType(const VariableName & var_name) const
 }
 
 void
+VEFlowFV::checkPetrophysicsVariableType(const std::string & param_name,
+                                          const VariableName & var_name) const
+{
+  // VEPermeability and VEPorosity use coupledValue() inside a Material that is also
+  // evaluated via getNeighborMaterialProperty in VEFVAdvectiveFlux. MOOSE only reinits
+  // MooseVariableFVReal variables on FV neighbour elements; a regular FE AuxVariable
+  // (e.g. CONSTANT MONOMIAL without type = MooseVariableFVReal) reads as zero on the
+  // neighbour side, so the harmonic K face average collapses to zero and the advective
+  // flux is silently killed.
+  if (!isVariableFV(var_name))
+    paramError(param_name,
+               "Petrophysics variable '",
+               var_name,
+               "' is not a finite-volume variable. In an FV VEFlow physics, phi_bar and "
+               "K_up_* must be declared as type = MooseVariableFVReal: a regular FE aux "
+               "variable (even CONSTANT MONOMIAL) is not reinitialised on FV neighbour "
+               "elements, so the K value reads as zero on the neighbour side and the "
+               "harmonic face-K average collapses to zero, silently killing the advective "
+               "flux. Declare the variable with type = MooseVariableFVReal, or supply a "
+               "scalar constant instead (e.g. K_up_xx = 1.0e-12).");
+}
+
+void
 VEFlowFV::addFVKernels()
 {
   const auto & g = getParam<RealVectorValue>("gravity");

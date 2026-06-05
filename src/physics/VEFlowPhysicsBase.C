@@ -237,6 +237,19 @@ VEFlowPhysicsBase::checkRequiredFields()
     if (getProblem().hasVariable(vn))
       checkGeometryVariableType(vn);
 
+  // Type-correctness of the petrophysics variables. Only triggered for variable-name
+  // params (non-numeric) that actually exist; constants (e.g. phi_bar = 0.2) are skipped.
+  // paramError throws immediately for the first bad variable.
+  for (const std::string & pname :
+       std::vector<std::string>{"phi_bar", "K_up_xx", "K_up_yy", "K_up_xy"})
+  {
+    if (!isParamValid(pname))
+      continue;
+    for (const auto & vn : getParam<std::vector<VariableName>>(pname))
+      if (!MooseUtils::parsesToReal(vn) && getProblem().hasVariable(vn))
+        checkPetrophysicsVariableType(pname, vn);
+  }
+
   if (missing.empty())
     return;
 

@@ -34,4 +34,6 @@ private:
   virtual void initializePhysicsAdditional() override;
   virtual InputParameters getAdditionalRMParams() const override;
   virtual void checkGeometryVariableType(const VariableName & var_name) const override;
+  virtual void checkPetrophysicsVariableType(const std::string & param_name,
+                                              const VariableName & var_name) const override;
 };
