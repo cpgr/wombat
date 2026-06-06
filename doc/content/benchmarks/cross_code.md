@@ -365,16 +365,26 @@ each an instance of the "which physics is switched on" theme:
 
 | metric | agreement |
 |--------|-----------|
-| mobile CO2 mass | within **0.1%** to 130 yr, **1.8%** at 194 yr -- tracks through injection, the ~70 yr plateau, and the updip-drainage decline |
-| plume footprint | matches early (~0% at 50 yr), **diverges late** (MRST ~40% wider at 194 yr) |
+| mobile CO2 mass | within **0.1%** to 130 yr, ~**3%** at 194 yr -- tracks through injection, the ~70 yr plateau, and the updip-drainage decline |
+| plume footprint | matches early (~0% at 50 yr), MRST ~**20%** wider late; both peak ~160 yr and contract |
 
 The mass (inventory) agreement is the robust result and validates the setup end to end,
-including dome-filling. The footprint divergence is expected: footprint at `sat > 1e-3`
-is a **numerical-diffusion-sensitive** metric (it tracks the diffuse low-saturation
-fringe, not the bulk), and the two codes' first-order-upwind schemes spread that fringe
-differently over 200 yr on a 50x50 grid -- wombat's footprint even peaks at 160 yr and
-contracts as the plume consolidates in the dome, while MRST keeps spreading. A higher
-threshold (`sat > 0.05`, the bulk plume) or a TVD limiter / finer grid would tighten it,
-but it is not a physics disagreement. **Bottom line: the codes agree on inventory to ~1%
-and differ on diffuse plume extent in the way two advection-dominated discretisations
-do** -- a defensible cross-code result.
+including dome-filling.
+
+The footprint comparison was sharpened by a residual-saturation convention fix. MRST's
+`makeVEFluid 'residual'` is `[residual_water, residual_CO2]` (per `exampleVEJohansen.m`:
+`[srw, src]`); an early version of the mirror had this transposed (`[0, 0.2]` instead of
+`[0.2, 0]`), which set the capillary column height to `h = sG*H` instead of `sG*H/(1-S_wr)`
+and made MRST spread on a column 1.25x too short per unit saturation. Correcting it
+**halved the late-time footprint gap (from ~40% to ~20% at 194 yr) and aligned the
+qualitative behaviour**: both codes now show the footprint peaking near 160 yr and then
+contracting as the plume consolidates in the dome (previously MRST grew monotonically).
+
+The remaining ~20% is the expected residual: footprint at `sat > 1e-3` is a
+**numerical-diffusion-sensitive** metric (it tracks the diffuse low-saturation fringe, not
+the bulk), and the two codes' first-order-upwind schemes spread that fringe differently
+over 200 yr on a 50x50 grid. A higher threshold (`sat > 0.05`, the bulk plume) or a TVD
+limiter / finer grid would tighten it further, but it is not a physics disagreement.
+**Bottom line: the codes agree on inventory to ~1-3% and on the qualitative plume
+evolution, with diffuse plume extent differing in the way two advection-dominated
+discretisations do** -- a defensible cross-code result.

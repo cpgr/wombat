@@ -39,10 +39,15 @@ Gt = topSurfaceGrid(G3D);
 rock2D = makeRock(Gt, 200*9.869e-16, 0.20);     % 1.9738e-13 m^2
 
 %% ── FLUID: constant rho/mu, sharp interface, S_wr = 0.2; forced incompressible
+% makeVEFluid 'residual' is [residual_WATER, residual_CO2] (per exampleVEJohansen.m:
+% srw then src). wombat's S_wr = 0.2 is residual water with NO residual CO2 (no
+% trapping), so the correct order is [0.2, 0.0]. This sets the column-full state to
+% sG = 1 - srw = 0.8 (matching wombat sat_n max) and the capillary column height to
+% h = sG*H/(1-srw) = sG*H/0.8 (matching wombat's VEFVCapPressure S_wr = 0.2).
 fluid = makeVEFluid(Gt, rock2D, 'sharp_interface_simple', ...
     'co2_mu_ref', 6e-5, 'wat_mu_ref', 8e-4, ...
     'co2_rho_ref', 700, 'wat_rho_ref', 1000, ...
-    'residual', [0.0, 0.2], 'dissolution', false);
+    'residual', [0.2, 0.0], 'dissolution', false);
 fluid.bG = @(p, varargin) 1 + 0*p;     % rho_CO2  = 700  everywhere (incompressible)
 fluid.bW = @(p, varargin) 1 + 0*p;     % rho_brine= 1000 everywhere
 
